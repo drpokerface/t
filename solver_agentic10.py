@@ -19,7 +19,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.responses import Response
 from weasyprint import HTML, CSS
-
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 # ------------------------------ Configuration ------------------------------
 OPENAI_API_KEY = "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" #"sk-TI4QAzumMX3a_nyzjV7JLGaJxrfBd2ZXUWHW2s8mf6T3BlbkFJHdavfukK1JF6Y3EgoCj7CuhN9wQSwEAOXgI9lDKA4A" #"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"
 SERP_API_KEY   = "6fac0d40369a7711c0381f3c9ed349ec7e63dda084ec9c93eef768737770b826"
@@ -80,7 +83,12 @@ class ChatTurnResponse(BaseModel):
     final_description: Optional[str] = Field(
         description="The comprehensive, finalized problem description. Required ONLY if status is 'complete'."
     )
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
+@app.get("/", response_class=HTMLResponse)
+async def serve_home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 # ------------------------------ Feature 1: Chat Diagnostician ------------------------------
 @app.post("/chat_gather_info")
 async def chat_gather_info(req: ChatRequest):
