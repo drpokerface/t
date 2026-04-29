@@ -23,10 +23,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
+import os
 # ------------------------------ Configuration ------------------------------
-OPENAI_API_KEY = "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" #"sk-TI4QAzumMX3a_nyzjV7JLGaJxrfBd2ZXUWHW2s8mf6T3BlbkFJHdavfukK1JF6Y3EgoCj7CuhN9wQSwEAOXgI9lDKA4A" #"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"
-SERP_API_KEY   = "6fac0d40369a7711c0381f3c9ed349ec7e63dda084ec9c93eef768737770b826"
-SCRAPINGDOG_API_KEY = "693af892674e92afaa2fdc32"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SERP_API_KEY = os.getenv("SERP_API_KEY")
+SCRAPINGDOG_API_KEY = os.getenv("SCRAPINGDOG_API_KEY")
+
 
 NUM_QUERIES = 2
 NUM_RESULTS_PER_QUERY = 3
