@@ -93,7 +93,14 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    try:
+        return templates.TemplateResponse("index.html", {"request": request})
+    except Exception as e:
+        import traceback
+        return HTMLResponse(
+            content=f"<pre>{traceback.format_exc()}</pre>",
+            status_code=500
+        )
 # ------------------------------ Feature 1: Chat Diagnostician ------------------------------
 @app.post("/chat_gather_info")
 async def chat_gather_info(req: ChatRequest):
