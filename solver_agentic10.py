@@ -94,7 +94,11 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 @app.get("/", response_class=HTMLResponse)
 async def serve_home(request: Request):
     try:
-        return templates.TemplateResponse("index.html", {"request": request})
+        return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={}
+    )
     except Exception as e:
         import traceback
         return HTMLResponse(
