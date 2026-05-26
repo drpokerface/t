@@ -64,6 +64,7 @@ from fastapi.templating import Jinja2Templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+app = FastAPI(title="SolverSearch Engine v2.2")
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 
@@ -83,7 +84,6 @@ NUM_QUERIES_BUSINESSES = 8
 NUM_RESULTS_PER_QUERY  = 90
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-app = FastAPI(title="SolverSearch Engine v2.2")
 
 app.add_middleware(
     CORSMiddleware,
