@@ -46,7 +46,7 @@ import operator
 from urllib.parse import urlparse, urlunparse
 from typing import Any, Dict, List, Optional, Tuple, Literal, TypedDict, Annotated
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response, HTMLResponse
 from pydantic import BaseModel, Field
@@ -1447,19 +1447,11 @@ compare_solutions_graph = _compare_sol_g.compile()
 # ============================================================
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_home(request: Request):
-    try:
-        return templates.TemplateResponse(
+async def serve_index(request: Request):    # ← add ": Request"
+    return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={}
     )
-    except Exception as e:
-        import traceback
-        return HTMLResponse(
-            content=f"<pre>{traceback.format_exc()}</pre>",
-            status_code=500
-        )
 
 # --- Feature 1: Chat Diagnostician ---
 @app.post("/chat_gather_info")
