@@ -6,3 +6,4 @@ pydantic
 weasyprint
 jinja2
 python-multipart
+langgraph
