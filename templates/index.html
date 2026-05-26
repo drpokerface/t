@@ -3,54 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SolverSearch | Expert Matchmaker</title>
+    <title>SolverSearch | Problem-to-Solution Matchmaker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         /* --- STRICT 3-COLOR THEME ENGINE (Base, Accent, Text) --- */
         :root {
-            /* Light Mode Colors */
-            --rgb-bg: 248, 250, 252;       /* Ultra-light slate for a cleaner canvas */
-            --rgb-accent: 14, 165, 233;    /* Professional Sky Blue */
-            --rgb-text: 15, 23, 42;        /* Deep Slate */
-            
-            /* Glass properties - highly refined for minimalism */
-            --glass-bg: rgba(255, 255, 255, 0.7);
+            --rgb-bg: 241, 245, 249;
+            --rgb-accent: 14, 165, 233;
+            --rgb-text: 15, 23, 42;
+            --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.8);
             --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.02);
+            --focus-ring: 0 0 0 3px rgba(var(--rgb-accent), 0.25);
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         [data-theme="dark"] {
-            /* Dark Mode Colors */
-            --rgb-bg: 11, 17, 32;          /* Deep Navy */
-            --rgb-accent: 56, 189, 248;    /* Bright Sky Blue */
-            --rgb-text: 241, 245, 249;     /* Off White */
-            
-            /* Glass properties */
+            --rgb-bg: 11, 17, 32;
+            --rgb-accent: 56, 189, 248;
+            --rgb-text: 241, 245, 249;
             --glass-bg: rgba(30, 41, 59, 0.4);
             --glass-border: rgba(255, 255, 255, 0.08);
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --focus-ring: 0 0 0 3px rgba(var(--rgb-accent), 0.35);
         }
 
-        /* Base & Resets */
-        body { 
-            font-family: 'Inter', sans-serif; 
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, rgba(var(--rgb-bg), 1) 0%, rgba(var(--rgb-bg), 0.95) 100%);
-            color: rgba(var(--rgb-text), 1); 
+            color: rgba(var(--rgb-text), 1);
             margin: 0; padding: 0; line-height: 1.6; min-height: 100vh;
             transition: background 0.4s ease, color 0.4s ease;
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
 
-        ::-webkit-scrollbar { width: 6px; }
+        /* === Focus rings (accessibility) === */
+        button:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        [role="button"]:focus-visible,
+        a:focus-visible {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+        /* The chat input wrapper has its own focus styling — disable the
+           generic ring on the textarea inside it to avoid double-rings */
+        .chat-input-wrapper textarea:focus-visible { box-shadow: none; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(var(--rgb-text), 0.15); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(var(--rgb-accent), 0.5); }
 
-        /* --- ANIMATIONS --- */
         @keyframes fadeSlideUp {
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
@@ -60,8 +73,19 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes shimmer {
+            0% { background-position: -300px 0; }
+            100% { background-position: 300px 0; }
+        }
+        @keyframes heroFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
 
-        /* --- UTILITY: GLASSMORPHISM --- */
         .glass-panel {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -70,9 +94,11 @@
             box-shadow: var(--glass-shadow);
         }
 
-        /* Header & Nav */
-        header { 
-            display: flex; justify-content: space-between; align-items: center; padding: 16px 48px; 
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        header {
+            display: flex; justify-content: space-between; align-items: center; padding: 16px 48px;
             position: sticky; top: 0; z-index: 100;
             background: var(--glass-bg);
             backdrop-filter: blur(24px);
@@ -80,103 +106,371 @@
             border-bottom: 1px solid var(--glass-border);
             transition: background-color 0.4s, border-color 0.4s;
         }
-
         .logo-container {
-            display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 800; 
+            display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 800;
             color: rgba(var(--rgb-text), 1); letter-spacing: -0.5px;
         }
-
         .custom-logo-img { height: 32px; width: auto; object-fit: contain; }
 
         .top-nav { display: flex; gap: 28px; align-items: center; }
         .nav-btn {
-            background: none; border: none; font-size: 0.9rem; font-weight: 500; 
+            background: none; border: none; font-size: 0.9rem; font-weight: 500;
             color: rgba(var(--rgb-text), 0.6); cursor: pointer; transition: color 0.2s;
+            padding: 6px 4px; border-radius: 6px;
         }
         .nav-btn:hover { color: rgba(var(--rgb-text), 1); }
 
-        /* Theme Toggle */
         .theme-switch-wrapper { display: flex; align-items: center; gap: 12px; margin-left: 16px; border-left: 1px solid rgba(var(--rgb-text), 0.1); padding-left: 24px; }
         .theme-label { font-size: 0.8rem; font-weight: 600; color: rgba(var(--rgb-text), 0.4); transition: color 0.3s ease; }
         body:not([data-theme="dark"]) .theme-label.light-label { color: rgba(var(--rgb-text), 1); }
         body[data-theme="dark"] .theme-label.dark-label { color: rgba(var(--rgb-text), 1); }
-
         .ios-toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
         .ios-toggle input { opacity: 0; width: 0; height: 0; }
         .ios-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(var(--rgb-text), 0.1); transition: .4s; border-radius: 24px; }
-        .ios-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .ios-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s var(--ease-out); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .ios-toggle input:checked + .ios-slider { background-color: rgba(var(--rgb-accent), 1); }
         .ios-toggle input:checked + .ios-slider:before { transform: translateX(20px); }
-        
-        /* Layout */
-        .app-container { display: flex; max-width: 1400px; margin: 0 auto; padding: 40px 48px; gap: 48px; flex: 1; width: 100%; box-sizing: border-box; }
 
-        /* Chat UI */
-        .chat-column { flex: 0 0 380px; display: flex; flex-direction: column; gap: 24px; }
-        .chat-messages { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: calc(100vh - 300px); padding-right: 12px; }
-        
-        .message { 
-            padding: 14px 18px; border-radius: 16px; max-width: 90%; 
-            opacity: 0; animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        /* ============================================================
+           APP LAYOUT — two states:
+           1. body.initial-state: chat dominates the screen (now fills
+              nearly the full viewport, not just a centered third).
+           2. Default (post-search): two-column layout, chat docked left.
+           ============================================================ */
+        .app-container {
+            display: flex; max-width: 1400px; margin: 0 auto; padding: 40px 48px;
+            gap: 48px; flex: 1; width: 100%;
+            transition: padding 0.4s var(--ease-out);
+        }
+        .chat-column {
+            flex: 0 0 380px; display: flex; flex-direction: column; gap: 16px;
+            transition: flex-basis 0.5s var(--ease-out),
+                        max-width 0.5s var(--ease-out);
+        }
+
+        /* === FIX #2: Hero + chat now dominate the viewport in initial state === */
+        body.initial-state .app-container {
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: auto;
+            min-height: calc(100vh - 140px);
+            padding: 32px 32px 48px;
+            max-width: 1100px;
+        }
+        body.initial-state .chat-column {
+            flex: 0 1 auto;
+            width: 100%;
+            max-width: 760px;
+            gap: 20px;
+            animation: fadeSlideUp 0.6s var(--ease-out);
+            justify-content: flex-start;
+            margin-top: 4vh;
+        }
+        body.initial-state .results-column { display: none; }
+        body.initial-state .chat-messages {
+            flex: 0 0 auto;
+            max-height: none;
+            min-height: auto;
+            overflow: visible;
+        }
+
+        /* === Hero block — only visible in initial state === */
+        .hero-block {
+            text-align: center;
+            margin-bottom: 8px;
+            animation: fadeSlideUp 0.7s var(--ease-out);
+        }
+        .hero-block h1 {
+            font-size: 2.4rem; font-weight: 800; letter-spacing: -1.5px;
+            margin: 0 0 12px 0;
+            background: linear-gradient(135deg, rgba(var(--rgb-text), 1) 0%, rgba(var(--rgb-accent), 1) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.15;
+            animation: heroFloat 4s ease-in-out infinite;
+        }
+        .hero-block p {
+            font-size: 1.05rem; color: rgba(var(--rgb-text), 0.6);
+            margin: 0; font-weight: 500;
+            max-width: 540px; margin-left: auto; margin-right: auto;
+        }
+        body.initial-state .hero-block h1 { font-size: 3.4rem; letter-spacing: -2px; margin-bottom: 16px; }
+        body.initial-state .hero-block p  { font-size: 1.2rem; max-width: 640px; }
+        body:not(.initial-state) .hero-block { display: none; }
+
+        /* === Example prompt chips on hero === */
+        .example-prompts {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            justify-content: center;
+            margin-top: 4px;
+            animation: fadeSlideUp 0.8s var(--ease-out) 0.1s both;
+        }
+        body:not(.initial-state) .example-prompts { display: none; }
+        /* FIX #1: Hide example prompts once the user starts typing */
+        .example-prompts.hidden { display: none !important; }
+        .example-prompts-label {
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(var(--rgb-text), 0.35);
+            margin-bottom: 8px;
+        }
+        .example-prompt {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: rgba(var(--rgb-text), 0.75);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out);
+            font-family: 'Inter', sans-serif;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .example-prompt:hover {
+            border-color: rgba(var(--rgb-accent), 0.4);
+            color: rgba(var(--rgb-accent), 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(var(--rgb-accent), 0.08);
+        }
+        .example-prompt::before {
+            content: '↗'; opacity: 0.5; font-weight: 700; font-size: 0.85em;
+        }
+
+        /* === Post-search chat controls === */
+        .chat-controls {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+        }
+        body:not(.initial-state) .chat-controls { display: flex; }
+        .chat-controls-label {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: rgba(var(--rgb-text), 0.4);
+        }
+        .new-search-link {
+            font-size: 0.78rem;
+            color: rgba(var(--rgb-text), 0.55);
+            background: none; border: none; cursor: pointer; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 8px; border-radius: 6px;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .new-search-link:hover {
+            color: rgba(var(--rgb-accent), 1);
+            background: rgba(var(--rgb-accent), 0.06);
+        }
+
+        /* === Chat messages === */
+        .chat-messages {
+            display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+            max-height: calc(100vh - 300px); padding-right: 12px;
+            transition: max-height 0.4s ease;
+        }
+        .message {
+            padding: 14px 18px; border-radius: 16px; max-width: 90%;
+            opacity: 0; animation: popIn 0.4s var(--ease-out) forwards;
         }
         .message p { margin: 0 0 6px 0; font-size: 0.95rem; }
         .message p:last-child { margin: 0; }
-        
-        .user-msg { 
-            background: rgba(var(--rgb-text), 0.9); 
-            color: rgba(var(--rgb-bg), 1); 
-            align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(var(--rgb-text), 0.1);
+        .user-msg {
+            background: rgba(var(--rgb-text), 0.9);
+            color: rgba(var(--rgb-bg), 1);
+            align-self: flex-end; border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(var(--rgb-text), 0.1);
         }
-        .agent-msg { 
+        .agent-msg {
             background: var(--glass-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border); color: rgba(var(--rgb-text), 1); 
-            align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: var(--glass-shadow);
+            border: 1px solid var(--glass-border); color: rgba(var(--rgb-text), 1);
+            align-self: flex-start; border-bottom-left-radius: 4px;
+            box-shadow: var(--glass-shadow);
         }
 
         .chat-options {
-            display: flex; flex-wrap: wrap; gap: 8px; margin-top: -8px;  margin-bottom: 8px;
-            align-self: flex-start; max-width: 90%; opacity: 0; animation: fadeSlideUp 0.4s ease-out 0.2s forwards; 
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: -8px; margin-bottom: 8px;
+            align-self: flex-start; max-width: 90%;
+            opacity: 0; animation: fadeSlideUp 0.4s ease-out 0.15s forwards;
         }
         .option-chip {
-            background: rgba(var(--rgb-accent), 0.05); color: rgba(var(--rgb-accent), 1); border: 1px solid rgba(var(--rgb-accent), 0.2);
-            padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease;
+            background: rgba(var(--rgb-accent), 0.05);
+            color: rgba(var(--rgb-accent), 1);
+            border: 1px solid rgba(var(--rgb-accent), 0.2);
+            padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
         }
         .option-chip:hover {
             background: rgba(var(--rgb-accent), 1); color: #fff;
             transform: translateY(-1px); box-shadow: 0 4px 12px rgba(var(--rgb-accent), 0.2);
         }
         .chat-options.disabled { pointer-events: none; opacity: 0.4; transition: opacity 0.3s; }
-        
-        .chat-input-wrapper { 
-            display: flex; align-items: center; border-radius: 16px; padding: 6px 12px; 
-            transition: border 0.3s, box-shadow 0.3s; 
+
+        /* === Chat input ===
+           FIX #3: The previous design had a heavy blue "thick rectangle" around
+           the input on focus (4px accent box-shadow). It's been removed in favor
+           of a subtle border-color change.
+           FIX #4: input → textarea, with align-items: flex-end so the mic/send
+           buttons stay pinned to the bottom as the textarea grows. */
+        .chat-input-wrapper {
+            display: flex; align-items: flex-end; gap: 4px;
+            border-radius: 16px; padding: 6px 8px 6px 12px;
+            transition: border 0.3s, box-shadow 0.3s, padding 0.3s;
             background: var(--glass-bg); border: 1px solid var(--glass-border);
         }
-        .chat-input-wrapper:focus-within { border-color: rgba(var(--rgb-accent), 0.4); box-shadow: 0 0 0 4px rgba(var(--rgb-accent), 0.1); }
-        .chat-input-wrapper input { 
-            flex: 1; border: none; outline: none; padding: 12px; font-size: 0.95rem; 
-            background: transparent; color: rgba(var(--rgb-text), 1); font-family: 'Inter', sans-serif;
+        body.initial-state .chat-input-wrapper {
+            padding: 12px 14px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
         }
-        .chat-input-wrapper input::placeholder { color: rgba(var(--rgb-text), 0.4); }
-        .send-btn { background: rgba(var(--rgb-text), 0.9); border-radius: 10px; border: none; color: rgba(var(--rgb-bg), 1); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, background 0.2s;}
-        .send-btn:hover { background: rgba(var(--rgb-accent), 1); transform: translateY(-1px); }
-        .send-btn:disabled { background: rgba(var(--rgb-text), 0.1); color: rgba(var(--rgb-text), 0.3); cursor: not-allowed; transform: none;}
+        .chat-input-wrapper:focus-within {
+            border-color: rgba(var(--rgb-text), 0.18);
+            box-shadow: none;
+        }
+        body.initial-state .chat-input-wrapper:focus-within {
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+        }
 
-        .mic-btn { background: transparent; border: none; cursor: pointer; padding: 0 12px; display: flex; align-items: center; justify-content: center; }
+        .chat-input-wrapper textarea {
+            flex: 1; border: none; outline: none;
+            padding: 10px 8px;
+            font-size: 0.95rem;
+            background: transparent;
+            color: rgba(var(--rgb-text), 1);
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            overflow-y: auto;
+            line-height: 1.5;
+            min-height: 24px;
+            max-height: 200px;
+        }
+        body.initial-state .chat-input-wrapper textarea {
+            font-size: 1.05rem;
+            padding: 12px 10px;
+            max-height: 280px;
+        }
+        .chat-input-wrapper textarea::placeholder { color: rgba(var(--rgb-text), 0.4); }
+        .chat-input-wrapper textarea:disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .send-btn {
+            background: rgba(var(--rgb-text), 0.9);
+            border-radius: 10px; border: none;
+            color: rgba(var(--rgb-bg), 1);
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform 0.2s, background 0.2s;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+        .send-btn:hover:not(:disabled) {
+            background: rgba(var(--rgb-accent), 1); transform: translateY(-1px);
+        }
+        .send-btn:disabled {
+            background: rgba(var(--rgb-text), 0.1); color: rgba(var(--rgb-text), 0.3);
+            cursor: not-allowed; transform: none;
+        }
+
+        .mic-btn {
+            background: transparent; border: none; cursor: pointer;
+            padding: 0 10px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; flex-shrink: 0;
+            margin-bottom: 2px;
+        }
         .mic-icon { width: 20px; height: 20px; stroke: rgba(var(--rgb-text), 0.4); transition: stroke 0.2s, transform 0.2s; }
-        .mic-btn:hover .mic-icon { stroke: rgba(var(--rgb-accent), 1); }
+        .mic-btn:hover:not(:disabled) .mic-icon { stroke: rgba(var(--rgb-accent), 1); }
+        .mic-btn:disabled { cursor: not-allowed; opacity: 0.4; }
         .mic-btn.recording .mic-icon { stroke: #ef4444; animation: pulse-mic 1.5s infinite; }
-        
+
         @keyframes pulse-mic {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.15); opacity: 0.6; }
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* Results UI */
-        .results-column { flex: 1; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+        /* ============================================================
+           RESULTS COLUMN
+           ============================================================ */
+        .results-column {
+            flex: 1; display: flex; flex-direction: column; gap: 24px; min-width: 0;
+            animation: fadeSlideUp 0.5s var(--ease-out);
+        }
 
-        /* --- UNIFIED CONFIGURATION PANEL (Accordion) --- */
+        /* === Inline status bar — now nested inside master-results-wrapper.
+           Softer styling with a subtle accent tint to signal "active". === */
+        .search-status-bar {
+            display: none;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg,
+                rgba(var(--rgb-accent), 0.06) 0%,
+                rgba(var(--rgb-accent), 0.02) 100%);
+            border: 1px solid rgba(var(--rgb-accent), 0.18);
+            animation: fadeSlideUp 0.3s var(--ease-out);
+        }
+        .search-status-bar.active { display: flex; }
+        .search-status-bar .pulse-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(var(--rgb-accent), 1);
+            animation: pulse-dot 1.4s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        .search-status-bar .status-text {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: rgba(var(--rgb-text), 0.85);
+            flex: 1;
+            min-width: 0;
+        }
+        .search-status-bar .status-text .status-detail {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: rgba(var(--rgb-text), 0.55);
+            margin-top: 2px;
+        }
+        .search-status-bar .progress-track {
+            width: 140px;
+            height: 4px;
+            background: rgba(var(--rgb-text), 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .search-status-bar .progress-fill {
+            width: 0%; height: 100%;
+            background: rgba(var(--rgb-accent), 1);
+            transition: width 0.5s var(--ease-out);
+            border-radius: 4px;
+        }
+        .btn-stop-inline {
+            background: transparent;
+            color: rgba(var(--rgb-text), 0.55);
+            border: 1px solid rgba(var(--rgb-text), 0.15);
+            padding: 5px 12px;
+            border-radius: 14px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            flex-shrink: 0;
+        }
+        .btn-stop-inline:hover {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        /* === Search config panel === */
         .unified-config-panel {
             border-radius: 16px;
             display: none;
@@ -186,7 +480,6 @@
             border: 1px solid var(--glass-border);
             box-shadow: var(--glass-shadow);
         }
-        
         .unified-config-panel summary {
             padding: 18px 24px;
             font-size: 0.95rem;
@@ -201,9 +494,9 @@
             transition: all 0.3s ease;
             user-select: none;
         }
-        
+        .unified-config-panel summary:hover { background: rgba(var(--rgb-text), 0.04); }
         .unified-config-panel summary::-webkit-details-marker { display: none; }
-        .unified-config-panel summary::after { 
+        .unified-config-panel summary::after {
             content: '';
             width: 10px; height: 10px;
             border-right: 2px solid rgba(var(--rgb-text), 0.4);
@@ -216,7 +509,7 @@
             border-bottom: 1px solid var(--glass-border);
             color: rgba(var(--rgb-accent), 1);
         }
-        .unified-config-panel[open] summary::after { 
+        .unified-config-panel[open] summary::after {
             transform: rotate(225deg);
             margin-top: 4px;
             border-color: rgba(var(--rgb-accent), 1);
@@ -229,35 +522,54 @@
             gap: 24px;
             background: var(--glass-bg);
         }
-
         .config-divider {
             height: 1px; width: 100%;
             background: linear-gradient(90deg, transparent, rgba(var(--rgb-text), 0.1), transparent);
             margin: 4px 0;
         }
-
-        /* Diagnosis inside Unified Panel */
-        .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; color: rgba(var(--rgb-text), 0.4); margin-bottom: 12px; }
-        .diagnosis-text { 
+        .section-title {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px;
+            font-weight: 700; color: rgba(var(--rgb-text), 0.42); margin-bottom: 12px;
+        }
+        .diagnosis-text {
             color: rgba(var(--rgb-text), 0.85); font-size: 0.95rem; line-height: 1.6; margin: 0;
-            padding-left: 16px; border-left: 2px solid rgba(var(--rgb-accent), 0.5); 
+            padding-left: 16px; border-left: 2px solid rgba(var(--rgb-accent), 0.5);
+            white-space: pre-wrap;
         }
 
-        /* Filters inside Unified Panel */
+        .classification-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .class-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600;
+            background: rgba(var(--rgb-text), 0.04);
+            color: rgba(var(--rgb-text), 0.5);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .class-chip.active {
+            background: rgba(var(--rgb-accent), 0.1);
+            color: rgba(var(--rgb-accent), 1);
+            border-color: rgba(var(--rgb-accent), 0.3);
+        }
+        .class-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+
         .filter-inline-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
         #filter-instruction { color: rgba(var(--rgb-text), 0.8); font-size: 0.9rem; font-weight: 500; }
         .inline-slider { flex: 1; max-width: 450px; margin-left: auto; }
-        
         .filter-container {
-            display: flex; align-items: center; gap: 16px; background: rgba(var(--rgb-text), 0.02); 
+            display: flex; align-items: center; gap: 16px; background: rgba(var(--rgb-text), 0.02);
             border: 1px solid rgba(var(--rgb-text), 0.08); padding: 12px 24px; border-radius: 12px;
         }
         .filter-container label { font-size: 0.85rem; font-weight: 600; color: rgba(var(--rgb-text), 0.8); white-space: nowrap; }
         .filter-container input[type=range] { flex: 1; width: auto; }
 
+        input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: rgba(var(--rgb-accent), 1);
-            cursor: pointer; margin-top: -7px; box-shadow: 0 0 10px rgba(var(--rgb-accent), 0.3); transition: transform 0.1s;
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
+            background: rgba(var(--rgb-accent), 1);
+            cursor: pointer; margin-top: -7px;
+            box-shadow: 0 0 10px rgba(var(--rgb-accent), 0.3); transition: transform 0.1s;
         }
         input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 2px; cursor: pointer; background: rgba(var(--rgb-text), 0.1); border-radius: 4px; }
@@ -270,7 +582,41 @@
         .dot-potential { background: #f59e0b; }
         .dot-low { background: #ef4444; }
 
-        /* Master Results Wrapper */
+        /* === Solution Stack panel === */
+        .stack-panel {
+            border-radius: 16px;
+            padding: 28px 32px;
+            display: none;
+            opacity: 0;
+            animation: fadeSlideUp 0.5s ease-out forwards;
+            position: relative;
+        }
+        .stack-panel h3.stack-title {
+            margin: 0 0 8px 0;
+            font-size: 1.15rem;
+            letter-spacing: -0.3px;
+            color: rgba(var(--rgb-text), 1);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .stack-panel .stack-title-icon {
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+            background: rgba(var(--rgb-accent), 0.1);
+            color: rgba(var(--rgb-accent), 1);
+        }
+        .stack-panel .stack-subtitle {
+            font-size: 0.82rem; color: rgba(var(--rgb-text), 0.55);
+            margin: 0 0 20px 0; font-weight: 500;
+            padding-left: 42px;
+        }
+        .stack-panel .stack-content h3 { color: rgba(var(--rgb-text), 1); font-size: 1rem; margin-top: 20px; }
+        .stack-panel .stack-content p { color: rgba(var(--rgb-text), 0.85); font-size: 0.92rem; line-height: 1.65; }
+        .stack-panel .stack-content ul { padding-left: 20px; }
+        .stack-panel .stack-content li { color: rgba(var(--rgb-text), 0.85); font-size: 0.92rem; margin-bottom: 6px; }
+        .stack-panel .stack-content strong { color: rgba(var(--rgb-accent), 1); }
+
+        /* === Master results wrapper === */
         .master-results-wrapper {
             border-radius: 16px; padding: 24px; display: none; flex-direction: column; gap: 24px;
             opacity: 0; animation: fadeSlideUp 0.5s ease-out forwards;
@@ -279,48 +625,185 @@
         .results-header {
             display: flex; align-items: center; justify-content: space-between;
             padding-bottom: 20px; border-bottom: 1px solid rgba(var(--rgb-text), 0.08);
+            flex-wrap: wrap; gap: 16px;
+        }
+        #search-stats {
+            color: rgba(var(--rgb-text), 1); font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px;
+        }
+        #search-stats strong {
+            background: linear-gradient(135deg, rgba(var(--rgb-accent), 1), rgba(var(--rgb-accent), 0.7));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        #search-stats { color: rgba(var(--rgb-text), 1); font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px; }
-
         .action-buttons { display: flex; gap: 12px; }
-        .btn-compare { 
-            background: rgba(var(--rgb-text), 0.9); color: rgba(var(--rgb-bg), 1); border: none; 
-            padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; 
-            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(var(--rgb-text), 0.1);
+        .btn-compare {
+            background: rgba(var(--rgb-text), 0.9); color: rgba(var(--rgb-bg), 1); border: none;
+            padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(var(--rgb-text), 0.1);
+            font-family: 'Inter', sans-serif;
         }
         .btn-compare:disabled { background: rgba(var(--rgb-text), 0.05); color: rgba(var(--rgb-text), 0.3); box-shadow: none; cursor: not-allowed; }
         .btn-compare:not(:disabled):hover { background: rgba(var(--rgb-accent), 1); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(var(--rgb-accent), 0.2); }
         .btn-secondary { background: transparent; border: 1px solid rgba(var(--rgb-text), 0.1); color: rgba(var(--rgb-text), 0.8); box-shadow: none; }
         .btn-secondary:not(:disabled):hover { background: rgba(var(--rgb-text), 0.05); color: rgba(var(--rgb-text), 1); transform: none; box-shadow: none; }
 
-        /* Profile Cards Grid */
-        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
+        /* === Resource tabs === */
+        .resource-tabs {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            padding-bottom: 4px;
+        }
+        .resource-tab {
+            background: transparent;
+            border: 1px solid rgba(var(--rgb-text), 0.08);
+            color: rgba(var(--rgb-text), 0.6);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .resource-tab:hover {
+            color: rgba(var(--rgb-text), 1);
+            border-color: rgba(var(--rgb-text), 0.2);
+        }
+        .resource-tab.active {
+            background: rgba(var(--rgb-accent), 0.1);
+            color: rgba(var(--rgb-accent), 1);
+            border-color: rgba(var(--rgb-accent), 0.3);
+        }
+        .resource-tab .count-badge {
+            background: rgba(var(--rgb-text), 0.08);
+            color: rgba(var(--rgb-text), 0.7);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .resource-tab.active .count-badge {
+            background: rgba(var(--rgb-accent), 0.2);
+            color: rgba(var(--rgb-accent), 1);
+        }
+
+        /* === Results grid === */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* === Empty state === */
         .empty-state {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 300px; text-align: center; color: rgba(var(--rgb-text), 0.4);
             border: 2px dashed rgba(var(--rgb-text), 0.1); border-radius: 16px;
+            padding: 24px;
         }
         .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; stroke: rgba(var(--rgb-text), 0.2); }
-        
+        .empty-state p { margin: 0; font-weight: 500; max-width: 320px; line-height: 1.5; }
+
+        /* === Skeleton card (placeholder during loading) === */
+        .skeleton-card {
+            border-radius: 16px;
+            padding: 24px;
+            background: rgba(var(--rgb-bg), 0.6);
+            border: 1px solid rgba(var(--rgb-text), 0.05);
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeSlideUp 0.4s var(--ease-out) forwards;
+        }
+        .skeleton-line {
+            background: linear-gradient(
+                90deg,
+                rgba(var(--rgb-text), 0.05) 0%,
+                rgba(var(--rgb-text), 0.1) 50%,
+                rgba(var(--rgb-text), 0.05) 100%
+            );
+            background-size: 300px 100%;
+            border-radius: 4px;
+            animation: shimmer 1.6s linear infinite;
+        }
+        .skeleton-line.short { width: 40%; height: 12px; }
+        .skeleton-line.medium { width: 70%; height: 16px; }
+        .skeleton-line.long { width: 100%; height: 12px; }
+        .skeleton-line.big { width: 60%; height: 28px; margin-top: 4px; }
+        .skeleton-spacer { flex: 1; }
+
+        /* === Profile card === */
         .profile-card {
-            border-radius: 16px; padding: 24px; text-align: left; position: relative; display: flex; flex-direction: column; 
-            opacity: 0; animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            background: rgba(var(--rgb-bg), 0.6); border: 1px solid rgba(var(--rgb-text), 0.06);
-            overflow: hidden; /* Fixes rounded corners when panel reveals */
+            border-radius: 16px; padding: 24px; text-align: left; position: relative;
+            display: flex; flex-direction: column;
+            opacity: 0; animation: popIn 0.45s var(--ease-out) forwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+            background: rgba(var(--rgb-bg), 0.6);
+            border: 1px solid rgba(var(--rgb-text), 0.06);
+            overflow: hidden;
+        }
+        .profile-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+            border-color: rgba(var(--rgb-accent), 0.3);
+        }
+        /* === Selected card state (clear visual feedback) === */
+        .profile-card.is-selected {
+            border-color: rgba(var(--rgb-accent), 0.55);
+            background: linear-gradient(180deg, rgba(var(--rgb-accent), 0.05) 0%, rgba(var(--rgb-bg), 0.6) 60%);
+            box-shadow: 0 0 0 1px rgba(var(--rgb-accent), 0.3), 0 8px 24px rgba(var(--rgb-accent), 0.08);
+        }
+        .profile-card.is-selected:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 0 1px rgba(var(--rgb-accent), 0.45), 0 12px 32px rgba(var(--rgb-accent), 0.15);
         }
 
-        .profile-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.06); border-color: rgba(var(--rgb-accent), 0.3); }
-        
-        /* --- MANAGE PROFILE PANEL (Hover Reveal) --- */
+        .resource-type-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            width: fit-content;
+        }
+        .rt-expert { background: rgba(var(--rgb-accent), 0.1); color: rgba(var(--rgb-accent), 1); }
+        .rt-tool { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+        .rt-business { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+        .source-pill {
+            font-size: 0.7rem;
+            color: rgba(var(--rgb-text), 0.5);
+            margin-bottom: 12px;
+            font-weight: 500;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .source-pill::before { content: '↳ '; opacity: 0.6; }
+
+        /* === Manage profile hover panel (experts only) === */
         .manage-profile-wrapper {
             max-height: 0;
             opacity: 0;
             overflow: hidden;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            margin: 0 -24px -24px -24px; 
+            transition: all 0.35s var(--ease-out);
+            margin: 0 -24px -24px -24px;
             padding: 0 24px;
             background: rgba(var(--rgb-bg), 0.8);
             border-top: 1px solid transparent;
@@ -329,8 +812,7 @@
             flex-direction: column;
             align-items: center;
         }
-
-        .profile-card:hover .manage-profile-wrapper {
+        .profile-card[data-resource-type="expert"]:hover .manage-profile-wrapper {
             max-height: 100px;
             opacity: 1;
             padding: 16px 24px;
@@ -338,65 +820,100 @@
             border-top-color: rgba(var(--rgb-accent), 0.3);
             transform: translateY(0);
         }
-
-        .manage-profile-text {
-            font-size: 0.75rem;
-            color: rgba(var(--rgb-text), 0.6);
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .manage-btn-group {
-            display: flex;
-            gap: 12px;
-        }
-
+        .manage-profile-text { font-size: 0.75rem; color: rgba(var(--rgb-text), 0.6); margin-bottom: 10px; font-weight: 500; }
+        .manage-btn-group { display: flex; gap: 12px; }
         .manage-btn {
             background: rgba(var(--rgb-bg), 1);
             border: 1px solid rgba(var(--rgb-accent), 0.6);
             color: rgba(var(--rgb-accent), 1);
-            padding: 6px 18px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 6px 18px; border-radius: 8px;
+            font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
         }
-
         .manage-btn:hover {
             background: rgba(var(--rgb-accent), 0.15);
             border-color: rgba(var(--rgb-accent), 1);
             transform: translateY(-1px);
         }
-        
-        .checkbox-container { position: absolute; top: 24px; right: 24px; z-index: 10; }
-        .checkbox-container input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: rgba(var(--rgb-accent), 1); }
 
-        .profile-header-group { margin-bottom: 16px; padding-right: 32px; }
+        /* === Custom card checkbox === */
+        .checkbox-container { position: absolute; top: 24px; right: 24px; z-index: 10; }
+        .card-checkbox {
+            width: 22px; height: 22px;
+            border: 1.5px solid rgba(var(--rgb-text), 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(var(--rgb-bg), 0.8);
+            transition: all 0.2s var(--ease-out);
+        }
+        .card-checkbox:hover {
+            border-color: rgba(var(--rgb-accent), 0.6);
+            background: rgba(var(--rgb-accent), 0.05);
+        }
+        .card-checkbox.checked {
+            background: rgba(var(--rgb-accent), 1);
+            border-color: rgba(var(--rgb-accent), 1);
+        }
+        .card-checkbox svg {
+            width: 14px; height: 14px;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.15s, transform 0.15s var(--ease-out);
+        }
+        .card-checkbox.checked svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .profile-header-group { margin-bottom: 16px; padding-right: 36px; }
         .profile-name { margin: 0 0 4px 0; font-size: 1.15rem; font-weight: 700; color: rgba(var(--rgb-text), 1); letter-spacing: -0.3px; }
         .profile-title { font-size: 0.85rem; color: rgba(var(--rgb-text), 0.6); margin: 0; font-weight: 500; line-height: 1.4; }
-        
-        .score-inline-group { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .score-large { font-size: 1.6rem; font-weight: 800; letter-spacing: -1px;}
-        
-        .permanent-reasoning {
-            background: rgba(var(--rgb-text), 0.02); border-left: 2px solid transparent; 
-            padding: 0 16px; border-radius: 0 8px 8px 0; font-size: 0.8rem; line-height: 1.6; color: rgba(var(--rgb-text), 0.7);
-            margin-bottom: 0; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .profile-card:hover .permanent-reasoning {
-            max-height: 300px; opacity: 1; padding: 12px 16px; margin-bottom: 20px; border-left-color: rgba(var(--rgb-accent), 0.5);
+
+        .score-inline-group { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .score-large {
+            font-size: 1.6rem; font-weight: 800; letter-spacing: -1px;
+            font-variant-numeric: tabular-nums;
         }
 
-        .profile-link { 
-            text-decoration: none; color: rgba(var(--rgb-text), 0.9); background: rgba(var(--rgb-text), 0.05); 
-            padding: 10px 0; border-radius: 10px; font-size: 0.85rem; font-weight: 600; 
+        /* AI evaluation — now ALWAYS visible (was hover-only, breaking mobile UX).
+           Default = 2-line clamp; on hover/focus the card expands the box. */
+        .permanent-reasoning {
+            background: rgba(var(--rgb-text), 0.02);
+            border-left: 2px solid rgba(var(--rgb-accent), 0.4);
+            padding: 12px 14px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.8rem;
+            line-height: 1.55;
+            color: rgba(var(--rgb-text), 0.72);
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: -webkit-line-clamp 0.3s ease, max-height 0.3s ease;
+            max-height: 60px;
+        }
+        .profile-card:hover .permanent-reasoning,
+        .profile-card:focus-within .permanent-reasoning {
+            -webkit-line-clamp: unset;
+            max-height: 400px;
+        }
+        .permanent-reasoning strong { color: rgba(var(--rgb-text), 0.9); }
+
+        .profile-link {
+            text-decoration: none; color: rgba(var(--rgb-text), 0.9); background: rgba(var(--rgb-text), 0.05);
+            padding: 10px 0; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
             display: block; transition: all 0.2s ease; text-align: center; margin-top: auto;
         }
         .profile-link:hover { background: rgba(var(--rgb-text), 0.9); color: rgba(var(--rgb-bg), 1); }
 
         .score-tier-badge {
-            display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 20px;
             font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
         }
         .tier-top { background: rgba(16, 185, 129, 0.1); color: #10b981; }
@@ -404,7 +921,7 @@
         .tier-potential { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
         .tier-low { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-        /* Comparison Report Panel */
+        /* === Comparison panel === */
         .comparison-panel { padding: 32px; position: relative; margin-top: 24px; display: none; border-radius: 16px; }
         .comparison-panel p, .comparison-panel li { color: rgba(var(--rgb-text), 0.8); }
         .comparison-panel h2 { color: rgba(var(--rgb-text), 1); margin-top: 24px; font-size: 1.2rem; border-bottom: 1px solid rgba(var(--rgb-text), 0.1); padding-bottom: 12px; letter-spacing: -0.3px;}
@@ -412,7 +929,7 @@
             width: 100%; border-collapse: collapse; margin: 24px 0; background: rgba(var(--rgb-bg), 0.5);
             border-radius: 12px; overflow: hidden; border: 1px solid rgba(var(--rgb-text), 0.08);
         }
-        .comparison-panel th, .comparison-panel td { padding: 16px 24px; text-align: left; border-bottom: 1px solid rgba(var(--rgb-text), 0.08); color: rgba(var(--rgb-text), 0.9); font-size: 0.9rem; line-height: 1.6; }
+        .comparison-panel th, .comparison-panel td { padding: 16px 24px; text-align: left; border-bottom: 1px solid rgba(var(--rgb-text), 0.08); color: rgba(var(--rgb-text), 0.9); font-size: 0.9rem; line-height: 1.6; vertical-align: top; }
         .comparison-panel th { background: rgba(var(--rgb-text), 0.02); color: rgba(var(--rgb-text), 0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; }
         .comparison-panel tr:last-child td { border-bottom: none; }
         .comparison-panel tr:hover td { background: rgba(var(--rgb-text), 0.02); }
@@ -421,20 +938,12 @@
             position: absolute; top: 32px; right: 32px; background: transparent; border: 1px solid rgba(var(--rgb-text), 0.2);
             color: rgba(var(--rgb-text), 0.8); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
             display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
         }
         .download-pdf-btn:hover { border-color: rgba(var(--rgb-text), 0.9); color: rgba(var(--rgb-text), 0.9); background: rgba(var(--rgb-text), 0.05); }
-        
+
         .spinner { width: 18px; height: 18px; border: 2px solid rgba(var(--rgb-text), 0.1); border-top-color: rgba(var(--rgb-accent), 1); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
 
-        /* Search Loading State */
-        #search-status { display: none; padding: 60px 20px; text-align: center; color: rgba(var(--rgb-text), 0.8); font-weight: 500; animation: fadeSlideUp 0.4s forwards; }
-        .progress-container { margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-        .progress-track { width: 100%; max-width: 400px; background-color: rgba(var(--rgb-text), 0.08); border-radius: 8px; height: 4px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background-color: rgba(var(--rgb-accent), 1); transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .btn-stop { background: transparent; color: rgba(var(--rgb-text), 0.5); border: 1px solid rgba(var(--rgb-text), 0.2); padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-stop:hover { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
-
-        /* PDF Buffering Overlay */
         .pdf-loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(var(--rgb-bg), 0.8);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999;
@@ -446,129 +955,138 @@
         .pdf-loading-text { margin-top: 20px; font-weight: 600; color: rgba(var(--rgb-text), 0.9); font-size: 1.1rem; animation: pulse-text 1.5s infinite; }
         @keyframes pulse-text { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* --- TEXT TOOLTIP --- */
-        .tooltip-container {
-            position: relative;
-            display: inline-block;
-            color: rgba(var(--rgb-accent), 1);
-            font-weight: 600;
-            cursor: help;
-        }
-
+        .tooltip-container { position: relative; display: inline-block; color: rgba(var(--rgb-accent), 1); font-weight: 600; cursor: help; }
         .tooltip-text {
-            position: absolute;
-            bottom: 150%;
-            left: 50%;
+            position: absolute; bottom: 150%; left: 50%;
             transform: translateX(-50%) translateY(5px);
-            background: rgba(var(--rgb-bg), 1);
-            color: rgba(var(--rgb-text), 0.9);
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            line-height: 1.5;
-            white-space: normal;
-            width: 240px;
-            text-align: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(var(--rgb-bg), 1); color: rgba(var(--rgb-text), 0.9);
+            padding: 12px 16px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 500; line-height: 1.5;
+            white-space: normal; width: 240px; text-align: center;
+            opacity: 0; visibility: hidden;
+            transition: all 0.25s var(--ease-out);
             box-shadow: 0 8px 32px rgba(0,0,0,0.15);
             border: 1px solid rgba(var(--rgb-accent), 0.3);
-            pointer-events: none;
-            z-index: 200;
-            letter-spacing: 0;
+            pointer-events: none; z-index: 200; letter-spacing: 0;
         }
-
         .tooltip-text::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -6px;
-            border-width: 6px;
-            border-style: solid;
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px;
+            border-width: 6px; border-style: solid;
             border-color: rgba(var(--rgb-accent), 0.3) transparent transparent transparent;
         }
+        .tooltip-container:hover .tooltip-text { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
-        .tooltip-container:hover .tooltip-text {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
+        /* === Toast for non-fatal errors === */
+        .toast {
+            position: fixed;
+            bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            background: rgba(var(--rgb-bg), 0.98);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-left: 3px solid #ef4444;
+            color: rgba(var(--rgb-text), 0.95);
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 0.88rem; font-weight: 500;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 999;
+            transition: transform 0.4s var(--ease-out);
+            max-width: 480px;
+            display: flex; align-items: center; gap: 12px;
         }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast .toast-icon { color: #ef4444; flex-shrink: 0; }
+        .toast .toast-close {
+            background: none; border: none; cursor: pointer;
+            color: rgba(var(--rgb-text), 0.5);
+            padding: 4px; border-radius: 4px;
+            display: flex; margin-left: 8px;
+        }
+        .toast .toast-close:hover { color: rgba(var(--rgb-text), 1); }
 
-        /* --- FOOTER --- */
+        /* === Footer === */
         footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             padding: 24px 48px;
             background: var(--glass-bg);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border-top: 1px solid var(--glass-border);
-            font-size: 0.8rem;
-            color: rgba(var(--rgb-text), 0.6);
-            margin-top: auto; 
+            font-size: 0.8rem; color: rgba(var(--rgb-text), 0.6);
+            margin-top: auto;
         }
-
         .footer-socials { display: flex; gap: 16px; align-items: center; }
-        .footer-socials a { color: rgba(var(--rgb-text), 0.5); transition: color 0.2s, transform 0.2s; display: flex; }
+        .footer-socials a { color: rgba(var(--rgb-text), 0.5); transition: color 0.2s, transform 0.2s; display: flex; padding: 4px; border-radius: 4px; }
         .footer-socials a:hover { color: rgba(var(--rgb-accent), 1); transform: translateY(-2px); }
         .footer-socials svg { width: 18px; height: 18px; fill: currentColor; }
-
         .footer-links a { color: inherit; text-decoration: none; margin-left: 20px; transition: color 0.2s; font-weight: 500;}
         .footer-links a:hover { color: rgba(var(--rgb-accent), 1); }
 
-        /* Modals */
+        /* === Modals === */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(var(--rgb-bg), 0.6);
             display: flex; align-items: center; justify-content: center; z-index: 1000;
-            opacity: 0; visibility: hidden; transition: all 0.3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-content {
-            width: 90%; max-width: 420px; border-radius: 20px; padding: 32px; position: relative; 
-            transform: scale(0.95) translateY(10px); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 90%; max-width: 420px; border-radius: 20px; padding: 32px; position: relative;
+            transform: scale(0.95) translateY(10px); transition: transform 0.4s var(--ease-out);
             border: 1px solid var(--glass-border); background: var(--glass-bg); box-shadow: var(--glass-shadow);
         }
         .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
-        .modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; color: rgba(var(--rgb-text), 0.4); cursor: pointer; transition: color 0.2s;}
+        .modal-close {
+            position: absolute; top: 20px; right: 20px;
+            background: none; border: none; font-size: 1.5rem;
+            color: rgba(var(--rgb-text), 0.4); cursor: pointer; transition: color 0.2s;
+            line-height: 1; padding: 4px 8px; border-radius: 4px;
+        }
         .modal-close:hover { color: rgba(var(--rgb-text), 1); }
         .modal-title { margin-top: 0; color: rgba(var(--rgb-text), 1); font-size: 1.25rem; letter-spacing: -0.5px; margin-bottom: 16px; }
         .modal-content p, .modal-content li { color: rgba(var(--rgb-text), 0.7); font-size: 0.9rem; line-height: 1.6;}
 
-        /* Responsive Design */
         @media (max-width: 992px) {
             .app-container { flex-direction: column; padding: 24px; gap: 32px; }
             .chat-column { flex: none; width: 100%; max-width: 100%; }
             .chat-messages { max-height: 400px; }
             header { padding: 16px 24px; }
             .top-nav { display: none; }
+            body.initial-state .hero-block h1 { font-size: 2.2rem; }
+            body.initial-state .hero-block p  { font-size: 1.05rem; }
+            body.initial-state .chat-messages { min-height: 280px; }
+            .search-status-bar { flex-wrap: wrap; }
+            .search-status-bar .progress-track { width: 100%; }
         }
         @media (max-width: 768px) {
             footer { flex-direction: column; gap: 20px; text-align: center; padding: 24px; }
             .footer-links a { margin: 0 10px; }
         }
+        .chat-column:has(#chat-input:not(:placeholder-shown)) #example-prompts {
+    display: none !important;
+}
     </style>
 </head>
-<body>
+<body class="initial-state">
 
     <header>
-        <div class="logo-container">
+        <div class="logo-container" style="display: flex; align-items: center; gap: 8px;">
             <img src="/static/logo.png" alt="SolverSearch" class="custom-logo-img" onerror="this.style.display='none'">
-            SolverSearch
+            <img src="/static/TextOnly.png" alt="SolverSearch" style="height: 17px; width: auto;" onerror="this.style.display='none'" />
+            <span class="beta-badge" style="font-size: 10px; font-weight: 600; padding: 2px 6px; background: #2ab0eb; color: white; border-radius: 4px; letter-spacing: 0.5px;">BETA</span>
         </div>
         <nav class="top-nav">
             <button class="nav-btn" onclick="openModal('how-it-works-modal')">How it Works</button>
             <button class="nav-btn" onclick="openModal('about-modal')">About</button>
             <button class="nav-btn" onclick="openModal('faq-modal')">FAQ</button>
             <button class="nav-btn" onclick="openModal('careers-modal')">Careers</button>
-            
+
             <div class="theme-switch-wrapper">
                 <span class="theme-label light-label">Light</span>
                 <label class="ios-toggle">
-                    <input type="checkbox" id="theme-checkbox" onchange="toggleTheme()">
+                    <input type="checkbox" id="theme-checkbox" onchange="toggleTheme()" aria-label="Toggle dark mode">
                     <span class="ios-slider"></span>
                 </label>
                 <span class="theme-label dark-label">Dark</span>
@@ -578,17 +1096,35 @@
 
     <div class="app-container">
         <div class="chat-column">
+
+            <!-- Hero block: visible only in initial-state -->
+            <div class="hero-block">
+                <h1>What problem are you trying to solve?</h1>
+            </div>
+
+            <!-- Compact controls: visible AFTER first search -->
+            <div class="chat-controls">
+                <span class="chat-controls-label">Refine your search anytime</span>
+                <button class="new-search-link" onclick="startNewSearch()" title="Reset everything and start fresh">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    New search
+                </button>
+            </div>
+
             <div class="chat-messages" id="chat-box">
                 <div class="message agent-msg">
                     <p>Hi there. I'm the SolverSearch AI.</p>
-                    <p>Tell me about the problem you're facing at your company right now. (e.g., "Users are dropping off after onboarding")</p>
+                    <p>Tell me about the problem you're facing. I'll find the right combination of experts, tools, and agencies to solve it.</p>
                 </div>
             </div>
-            
+
+
+            <!-- FIX #4: input → textarea. Enter submits, Shift+Enter inserts a
+                 new line. The textarea auto-grows up to max-height. -->
             <div class="chat-input-wrapper">
-                <input type="text" id="chat-input" placeholder="Describe your problem..." onkeypress="if(event.key === 'Enter') sendChat()">
-                
-                <button id="mic-btn" class="mic-btn" onclick="toggleVoice()" title="Voice Input">
+                <textarea id="chat-input" placeholder="Describe your problem..." rows="1" aria-label="Chat message"></textarea>
+
+                <button id="mic-btn" class="mic-btn" onclick="toggleVoice()" title="Voice Input" aria-label="Voice input">
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mic-icon">
                         <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -596,15 +1132,15 @@
                         <line x1="8" y1="23" x2="16" y2="23"></line>
                     </svg>
                 </button>
-                
-                <button id="send-btn" class="send-btn" onclick="sendChat()">
+
+                <button id="send-btn" class="send-btn" onclick="sendChat()" aria-label="Send message">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
         </div>
 
         <div class="results-column">
-            
+
             <details id="unified-config-panel" class="unified-config-panel">
                 <summary>
                     <span style="display:flex; align-items:center; gap:8px;">
@@ -616,22 +1152,27 @@
                     <div>
                         <div class="section-title">AI Diagnosis</div>
                         <p id="ui-diagnosis" class="diagnosis-text"></p>
+                        <div id="classification-row" class="classification-row" style="display:none;">
+                            <span class="class-chip" data-type="expert"><span class="dot"></span>Experts</span>
+                            <span class="class-chip" data-type="tool"><span class="dot"></span>Tools</span>
+                            <span class="class-chip" data-type="business"><span class="dot"></span>Agencies</span>
+                        </div>
                     </div>
-                    
+
                     <div class="config-divider"></div>
-                    
+
                     <div>
                         <div class="filter-inline-row">
                             <div id="filter-instruction">
-                                Filter by minimum 
+                                Filter by minimum
                                 <div class="tooltip-container">
                                     SolverScore
-                                    <div class="tooltip-text">An AI-generated score (0-1000) evaluating how closely an expert's past experience matches your specific problem.</div>
+                                    <div class="tooltip-text">An AI-generated score (0-1000) evaluating how closely a candidate solution matches your specific problem.</div>
                                 </div>:
                             </div>
                             <div class="filter-container inline-slider">
                                 <label for="score-filter" id="score-filter-label">Min: 0</label>
-                                <input type="range" id="score-filter" min="0" max="1000" step="10" value="0" oninput="updateFilter(this.value)">
+                                <input type="range" id="score-filter" min="0" max="1000" step="10" value="0" oninput="updateFilter(this.value)" aria-label="Minimum SolverScore">
                             </div>
                         </div>
                         <div class="score-legend">
@@ -644,23 +1185,51 @@
                 </div>
             </details>
 
-            <div id="search-status">
-                <div class="spinner" id="search-spinner" style="width:24px; height:24px; border-width:3px; margin-bottom: 16px;"></div>
-                <div id="search-status-text" style="font-size: 1.1rem;">
-                    Initiating search...<br><span style="font-size: 0.9rem; font-weight: 500; color: rgba(var(--rgb-text), 0.6);">Connecting to agents...</span>
-                </div>
-                
-                <div id="progress-ui" class="progress-container" style="display: none;">
-                    <div class="progress-track"><div id="progress-bar" class="progress-fill"></div></div>
-                    <button class="btn-stop" onclick="stopSearch()">Stop Search Early</button>
-                </div>
+            <div id="stack-panel" class="glass-panel stack-panel">
+                <h3 class="stack-title">
+                    <span class="stack-title-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    </span>
+                    Recommended Solution Stack
+                </h3>
+                <p class="stack-subtitle">A strategic combination of experts, tools, and agencies for your problem.</p>
+                <div id="stack-content" class="stack-content"></div>
             </div>
 
             <div id="comparison-report" class="glass-panel comparison-panel"></div>
 
             <div id="master-results-wrapper" class="master-results-wrapper glass-panel">
+                <!-- Inline status bar — nested inside the results card. -->
+                <div id="search-status-bar" class="search-status-bar">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text" id="status-text">
+                        Initiating search...
+                        <span class="status-detail" id="status-detail">Connecting to agents</span>
+                    </span>
+                    <div class="progress-track">
+                        <div id="progress-bar" class="progress-fill"></div>
+                    </div>
+                    <button id="btn-stop" class="btn-stop-inline" onclick="stopSearch()">Stop</button>
+                </div>
+
                 <div class="results-header">
-                    <div id="search-stats">Results Board</div>
+                    <div style="display:flex; flex-direction: column; gap: 12px;">
+                        <div id="search-stats">Results Board</div>
+                        <div id="resource-tabs" class="resource-tabs" style="display:none;">
+                            <button class="resource-tab active" data-type="all" onclick="switchResourceTab('all')">
+                                All <span class="count-badge" id="count-all">0</span>
+                            </button>
+                            <button class="resource-tab" data-type="expert" onclick="switchResourceTab('expert')">
+                                Experts <span class="count-badge" id="count-expert">0</span>
+                            </button>
+                            <button class="resource-tab" data-type="tool" onclick="switchResourceTab('tool')">
+                                Tools <span class="count-badge" id="count-tool">0</span>
+                            </button>
+                            <button class="resource-tab" data-type="business" onclick="switchResourceTab('business')">
+                                Agencies <span class="count-badge" id="count-business">0</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="action-buttons">
                         <button id="btn-select-all" class="btn-compare btn-secondary" onclick="toggleSelectAll()">Select All</button>
                         <button id="btn-compare" class="btn-compare" disabled onclick="generateComparison()">Compare Selected (0)</button>
@@ -673,7 +1242,7 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <p style="margin:0; font-weight: 500;">Describe your problem to start matching with experts.</p>
+                        <p>Describe your problem to start matching with experts, tools, and agencies.</p>
                     </div>
                 </div>
             </div>
@@ -685,7 +1254,7 @@
         <div class="footer-copyright">
             Copyright © 2026 SolverSearch - All Rights Reserved.
         </div>
-        
+
         <div class="footer-socials">
             <a href="#" target="_blank" aria-label="Instagram">
                 <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -704,36 +1273,49 @@
         </div>
     </footer>
 
+    <!-- Toast for transient errors -->
+    <div id="toast" class="toast" role="status" aria-live="polite">
+        <svg class="toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span id="toast-text"></span>
+        <button class="toast-close" onclick="hideToast()" aria-label="Dismiss">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+
     <div class="modal-overlay" id="modal-overlay" onclick="closeAllModals(event)">
         <div class="modal-content" id="how-it-works-modal" style="display:none;">
-            <button class="modal-close" onclick="forceCloseModals()">&times;</button>
+            <button class="modal-close" onclick="forceCloseModals()" aria-label="Close">&times;</button>
             <h2 class="modal-title">How it Works</h2>
             <ol style="padding-left: 20px; margin-top: 10px;">
                 <li style="margin-bottom: 12px;"><strong>Diagnose:</strong> Chat with our AI to clearly define your challenge.</li>
-                <li style="margin-bottom: 12px;"><strong>Search:</strong> Our agents dynamically generate queries and scrape professional networks.</li>
-                <li style="margin-bottom: 12px;"><strong>Evaluate:</strong> We run candidates' resumes against your specific problem using an LLM to generate a SolverScore.</li>
-                <li><strong>Match:</strong> Review the top candidates and compare strengths.</li>
+                <li style="margin-bottom: 12px;"><strong>Classify:</strong> Our agent decides which solutions fit — experts, tools, agencies, or a combination.</li>
+                <li style="margin-bottom: 12px;"><strong>Search:</strong> Parallel agents scour LinkedIn, ProductHunt/G2, and Clutch/GoodFirms.</li>
+                <li style="margin-bottom: 12px;"><strong>Evaluate:</strong> An LLM scores every candidate against your specific problem.</li>
+                <li style="margin-bottom: 12px;"><strong>Synthesize:</strong> Review your recommended Solution Stack and compare options.</li>
+                <li><strong>Refine:</strong> Keep chatting to refine the diagnosis — every new message triggers a fresh, updated search.</li>
             </ol>
         </div>
 
         <div class="modal-content" id="about-modal" style="display:none;">
-            <button class="modal-close" onclick="forceCloseModals()">&times;</button>
+            <button class="modal-close" onclick="forceCloseModals()" aria-label="Close">&times;</button>
             <h2 class="modal-title">About SolverSearch</h2>
-            <p>SolverSearch is an AI-native expert matching platform. Instead of searching by job titles or generic keywords, you describe the exact business or technical problem you are facing.</p>
-            <p>Our autonomous agents crawl, scrape, and evaluate thousands of professional profiles to find the exact individuals who have provably solved your specific problem in the past.</p>
+            <p>SolverSearch is an AI-native problem-to-solution matchmaker. Instead of searching by job titles or generic keywords, you describe the exact business or technical problem you are facing.</p>
+            <p>Our autonomous agents crawl, scrape, and evaluate human experts, software tools, and consulting firms in parallel — then synthesize a recommended Solution Stack for your specific situation.</p>
         </div>
 
         <div class="modal-content" id="faq-modal" style="display:none;">
-            <button class="modal-close" onclick="forceCloseModals()">&times;</button>
+            <button class="modal-close" onclick="forceCloseModals()" aria-label="Close">&times;</button>
             <h2 class="modal-title" style="color: rgba(var(--rgb-accent), 1);">FAQ</h2>
             <h4 style="margin-bottom: 8px; color: rgba(var(--rgb-text), 1);">How is SolverScore calculated?</h4>
-            <p style="margin-top: 0;">SolverScore is generated by our custom LLM pipeline evaluating the parsed resume against your specific problem diagnosis in real-time.</p>
-            <h4 style="margin-bottom: 8px; margin-top: 24px; color: rgba(var(--rgb-text), 1);">Do you bypass LinkedIn's anti-scraping?</h4>
-            <p style="margin-top: 0;">We utilize enterprise-grade residential proxy APIs to gather publicly available data safely and reliably.</p>
+            <p style="margin-top: 0;">SolverScore is generated by our custom LLM pipeline evaluating each candidate (expert, tool, or agency) against your specific problem diagnosis in real-time.</p>
+            <h4 style="margin-bottom: 8px; margin-top: 24px; color: rgba(var(--rgb-text), 1);">How are data sources collected?</h4>
+            <p style="margin-top: 0;">We utilize enterprise-grade scraping APIs to gather publicly available data from professional networks and software directories safely and reliably.</p>
+            <h4 style="margin-bottom: 8px; margin-top: 24px; color: rgba(var(--rgb-text), 1);">What does refining a search do?</h4>
+            <p style="margin-top: 0;">Every refinement is a fresh search. The AI takes your full conversation into account, produces an updated diagnosis, and runs a new search from scratch — replacing all previous results.</p>
         </div>
 
         <div class="modal-content" id="careers-modal" style="display:none;">
-            <button class="modal-close" onclick="forceCloseModals()">&times;</button>
+            <button class="modal-close" onclick="forceCloseModals()" aria-label="Close">&times;</button>
             <h2 class="modal-title" style="color: rgba(var(--rgb-accent), 1);">Join the Mission</h2>
             <p>We are building the next generation of autonomous search agents. If you are passionate about LLMs, web scraping at scale, and beautiful minimalist UX, we want to talk to you.</p>
             <div style="background: rgba(var(--rgb-text), 0.03); padding: 20px; border-radius: 12px; margin-top: 24px; border: 1px solid rgba(var(--rgb-text), 0.08);">
@@ -744,14 +1326,14 @@
         </div>
 
         <div class="modal-content" id="privacy-modal" style="display:none;">
-            <button class="modal-close" onclick="forceCloseModals()">&times;</button>
+            <button class="modal-close" onclick="forceCloseModals()" aria-label="Close">&times;</button>
             <h2 class="modal-title">Privacy Policy</h2>
-            <p>Your data privacy is our priority. SolverSearch only evaluates publicly available professional data. We do not store personal identifiable information beyond what is required for core matchmaking functionality.</p>
+            <p>Your data privacy is our priority. SolverSearch only evaluates publicly available professional and product data. We do not store personal identifiable information beyond what is required for core matchmaking functionality.</p>
             <p>For a complete breakdown of our data handling practices, please contact our support team.</p>
         </div>
 
         <div class="modal-content" id="terms-modal" style="display:none;">
-            <button class="modal-close" onclick="forceCloseModals()">&times;</button>
+            <button class="modal-close" onclick="forceCloseModals()" aria-label="Close">&times;</button>
             <h2 class="modal-title">Terms & Conditions</h2>
             <p>By using SolverSearch, you agree to utilize our platform solely for professional networking and expert matchmaking purposes.</p>
             <p>Automated scraping of our platform results or reverse-engineering of the SolverScore algorithm is strictly prohibited.</p>
@@ -760,6 +1342,11 @@
 
     <script>
         const API_BASE = window.location.origin;
+
+
+        // ============================================================
+        // CORE STATE
+        // ============================================================
         let chatHistory = [];
         let fetchedProfiles = [];
         let currentProblemDescription = "";
@@ -771,10 +1358,83 @@
         let selectedUrls = new Set();
         let isAllSelected = false;
 
-        // Force Results Wrapper to show Empty State initially
+        // Resource-type filters
+        let currentResourceFilter = "all";
+        let resourceCounts = { expert: 0, tool: 0, business: 0 };
+
+        // True once a search has completed at least once — used to know we're
+        // past the centered-hero initial state. Refinements re-run a FULL search;
+        // there's no separate "continuation" mode anymore.
+        let hasSearchedAtLeastOnce = false;
+
+        // Animation cadence — cards stagger in slightly so it doesn't feel chaotic
+        let cardArrivalIndex = 0;
+
+        // Toast auto-dismiss timer
+        let toastTimer = null;
+
         document.getElementById("master-results-wrapper").style.display = "flex";
 
-        // --- WHISPER AUDIO PIPELINE ---
+        // ============================================================
+        // FIX #4: TEXTAREA AUTO-RESIZE + Enter/Shift+Enter handling.
+        // FIX #1: Hide example prompts as soon as the user types.
+        // Wired up after DOM is ready (the script lives at end of body so
+        // it's safe to query immediately).
+        // ============================================================
+        const chatInputEl = document.getElementById("chat-input");
+        const examplePromptsEl = document.getElementById("example-prompts");
+
+        function autoResizeChatInput() {
+            chatInputEl.style.height = "auto";
+            // Cap height via CSS max-height; setting scrollHeight here lets
+            // the box grow up to that cap, then scroll internally.
+            chatInputEl.style.height = chatInputEl.scrollHeight + "px";
+        }
+
+        function maybeHideExamplePrompts() {
+            if (!examplePromptsEl) return;
+            if (chatInputEl.value.length > 0) {
+                examplePromptsEl.classList.add("hidden");
+            }
+        }
+
+        /*
+        chatInputEl.addEventListener("input", () => {
+            autoResizeChatInput();
+            maybeHideExamplePrompts();
+        });
+        */
+        chatInputEl.addEventListener("input", maybeHideExamplePrompts);
+
+
+        // Enter = submit. Shift+Enter = newline (default textarea behavior).
+        chatInputEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendChat();
+            }
+        });
+
+        function resetChatInputHeight() {
+            chatInputEl.style.height = "auto";
+        }
+
+        // ============================================================
+        // EXAMPLE PROMPTS (initial-state hero)
+        // ============================================================
+        function useExamplePrompt(btn) {
+            if (examplePromptsEl) examplePromptsEl.classList.add("hidden");
+            const input = document.getElementById("chat-input");
+            input.value = btn.innerText;
+            autoResizeChatInput();
+            maybeHideExamplePrompts();
+            input.focus();
+            sendChat();
+        }
+
+        // ============================================================
+        // WHISPER AUDIO PIPELINE
+        // ============================================================
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
@@ -786,30 +1446,23 @@
                 isRecording = false;
             } else {
                 if (document.getElementById("chat-input").disabled) return;
-                
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     audioChunks = [];
-
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) audioChunks.push(e.data);
-                    };
-
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
                     mediaRecorder.onstop = async () => {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                         await processAudioWithWhisper(audioBlob);
                         stream.getTracks().forEach(track => track.stop());
                     };
-
                     mediaRecorder.start();
                     isRecording = true;
                     document.getElementById("mic-btn").classList.add("recording");
                     document.getElementById("chat-input").placeholder = "Listening... Click mic again to transcribe.";
-
                 } catch (err) {
                     console.error("Microphone access denied:", err);
-                    alert("Please allow microphone access to use voice dictation.");
+                    showToast("Please allow microphone access to use voice dictation.");
                 }
             }
         }
@@ -818,42 +1471,50 @@
             const inputEl = document.getElementById("chat-input");
             const btnEl = document.getElementById("send-btn");
             const micBtn = document.getElementById("mic-btn");
-            
             inputEl.disabled = true; btnEl.disabled = true; micBtn.disabled = true;
             inputEl.placeholder = "Transcribing securely via Whisper...";
-            
+
             const formData = new FormData();
             formData.append("audio", blob, "recording.webm");
-
             try {
                 const response = await fetch(`${API_BASE}/transcribe`, { method: "POST", body: formData });
                 if (!response.ok) throw new Error("Transcription failed on server.");
                 const data = await response.json();
-                
                 if (data.text) {
                     const currentVal = inputEl.value;
                     inputEl.value = currentVal ? `${currentVal} ${data.text}` : data.text;
+                    autoResizeChatInput();
+                    maybeHideExamplePrompts();
                 }
             } catch (e) {
                 console.error("Whisper error:", e);
-                alert("Failed to transcribe audio. Check backend terminal.");
+                showToast("Failed to transcribe audio. Check the backend.");
             } finally {
                 inputEl.disabled = false; btnEl.disabled = false; micBtn.disabled = false;
-                if (isWaitingForExtraInfo) {
-                    inputEl.placeholder = "Enter location/constraints or click 'No'...";
-                } else if (document.querySelector('.chat-options:last-child:not(.disabled)')) {
-                    inputEl.placeholder = "Select an option above, or type your own answer...";
-                } else {
-                    inputEl.placeholder = "Describe your problem...";
-                }
+                restoreChatPlaceholder();
                 inputEl.focus();
             }
         }
 
+        function restoreChatPlaceholder() {
+            const inputEl = document.getElementById("chat-input");
+            if (isWaitingForExtraInfo) {
+                inputEl.placeholder = "Enter location/constraints or click 'No'...";
+            } else if (document.querySelector('.chat-options:last-child:not(.disabled)')) {
+                inputEl.placeholder = "Select an option above, or type your own answer...";
+            } else if (hasSearchedAtLeastOnce) {
+                inputEl.placeholder = "Refine — every message triggers a fresh search...";
+            } else {
+                inputEl.placeholder = "Describe your problem...";
+            }
+        }
+
+        // ============================================================
+        // THEME, MODALS, TOAST
+        // ============================================================
         function toggleTheme() {
-            const body = document.documentElement;
             const isDark = document.getElementById('theme-checkbox').checked;
-            body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
         }
 
         function openModal(modalId) {
@@ -864,7 +1525,26 @@
         function closeAllModals(e) { if (e.target.id === 'modal-overlay') forceCloseModals(); }
         function forceCloseModals() { document.getElementById('modal-overlay').classList.remove('active'); }
 
+        function showToast(text, durationMs = 6000) {
+            const toast = document.getElementById("toast");
+            document.getElementById("toast-text").innerText = text;
+            toast.classList.add("show");
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(hideToast, durationMs);
+        }
+        function hideToast() {
+            document.getElementById("toast").classList.remove("show");
+            if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+        }
+
+        // ============================================================
+        // NAME HELPERS (type-aware)
+        // ============================================================
         function extractName(prof) {
+            const rt = prof.resource_type || "expert";
+            if (rt === "tool")     return prof.tool_name || "Unknown Tool";
+            if (rt === "business") return prof.firm_name || "Unknown Firm";
+
             const data = prof.profile_json || {};
             if (data.firstName) return data.firstName;
             if (data.first_name) return data.first_name;
@@ -884,6 +1564,30 @@
             return String(fullName).split(" ")[0];
         }
 
+        function fullDisplayName(prof) {
+            const rt = prof.resource_type || "expert";
+            if (rt === "tool")     return prof.tool_name || "Unknown Tool";
+            if (rt === "business") return prof.firm_name || "Unknown Firm";
+
+            const data = prof.profile_json || {};
+            if (data.fullName) return data.fullName;
+            if (data.full_name) return data.full_name;
+            if (data.name) return data.name;
+            if (data.personName) return data.personName;
+            const first = data.firstName || data.first_name || "";
+            const last  = data.lastName  || data.last_name  || "";
+            if (first || last) return `${first} ${last}`.trim();
+            const url = prof.profile_url || data._profile_url || "";
+            const match = url.match(/in\/([^/?#]+)/);
+            if (match && match[1]) {
+                return match[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            }
+            return "Unknown";
+        }
+
+        // ============================================================
+        // PDF DOWNLOAD
+        // ============================================================
         async function downloadPDF() {
             let overlay = document.getElementById("pdf-loading-overlay");
             if (!overlay) {
@@ -899,12 +1603,11 @@
                 const reportElement = document.getElementById("comparison-report").cloneNode(true);
                 const btnToRemove = reportElement.querySelector("#export-pdf-btn");
                 if (btnToRemove) btnToRemove.remove();
-                
+
                 const response = await fetch(`${API_BASE}/download_report_pdf`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ html_content: reportElement.innerHTML })
                 });
-
                 if (!response.ok) throw new Error(`Server responded with ${response.status}`);
 
                 const blob = await response.blob();
@@ -916,17 +1619,20 @@
                 window.URL.revokeObjectURL(downloadUrl); a.remove();
             } catch (err) {
                 console.error("PDF Download failed:", err);
-                alert("Failed to generate PDF. Check backend logs.");
+                showToast("Failed to generate PDF. Check backend logs.");
             } finally {
                 overlay.classList.remove("active");
             }
         }
 
+        // ============================================================
+        // CHAT
+        // ============================================================
         function appendMessage(role, text, options = []) {
             const chatBox = document.getElementById("chat-box");
             const msgDiv = document.createElement("div");
             msgDiv.className = `message ${role === 'user' ? 'user-msg' : 'agent-msg'}`;
-            msgDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+            msgDiv.innerHTML = `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
             chatBox.appendChild(msgDiv);
 
             if (role === 'agent' && options && options.length > 0) {
@@ -944,9 +1650,9 @@
         }
 
         function sendChatFromOption(text) {
-            const inputEl = document.getElementById("chat-input");
-            inputEl.value = text;
-            sendChat(); 
+            document.getElementById("chat-input").value = text;
+            autoResizeChatInput();
+            sendChat();
         }
 
         async function sendChat() {
@@ -963,20 +1669,37 @@
 
             appendMessage("user", text);
             chatHistory.push({ role: "user", content: text });
-            inputEl.value = ""; inputEl.disabled = true; btnEl.disabled = true;
-            
+            inputEl.value = "";
+            resetChatInputHeight();
+            maybeHideExamplePrompts();
+            inputEl.disabled = true; btnEl.disabled = true;
+
+            // ====================================================
+            // BRANCH A: user is answering the "any specific requirements?" question.
+            // This fires on EVERY diagnosis completion — first search or refinement.
+            // ====================================================
             if (isWaitingForExtraInfo) {
                 isWaitingForExtraInfo = false;
                 if (text.toLowerCase() !== "no" && text.toLowerCase() !== "none" && text.toLowerCase() !== "skip") {
                     currentProblemDescription += ". Additional user constraints/requirements: " + text;
                 }
-                appendMessage("agent", "Got it. Initiating targeted search with your criteria...");
-                inputEl.placeholder = "Search locked.";
+                if (!currentProblemDescription || !String(currentProblemDescription).trim()) {
+                    appendMessage("agent", "I lost the problem description somewhere. Could you describe the problem in one sentence so I can start the search?");
+                    inputEl.disabled = false; btnEl.disabled = false; inputEl.focus();
+                    inputEl.placeholder = "Describe your problem...";
+                    return;
+                }
+                appendMessage("agent", "Got it. Initiating a fresh search with your full context...");
                 document.getElementById("ui-diagnosis").innerText = currentProblemDescription;
                 runSearch(currentProblemDescription);
                 return;
             }
 
+            // ====================================================
+            // BRANCH B: normal chat turn — call the diagnostician.
+            // For refinements, this is the same call as first time. The diagnostician
+            // sees the FULL chat history and produces an updated final_description.
+            // ====================================================
             const typingId = "typing-" + Date.now();
             const chatBox = document.getElementById("chat-box");
             const typingDiv = document.createElement("div");
@@ -990,57 +1713,119 @@
                     body: JSON.stringify({ messages: chatHistory })
                 });
                 const data = await response.json();
-                document.getElementById(typingId).remove();
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
 
                 if (data.status === "chatting") {
-                    const suggestedOptions = data.options || []; 
-                    appendMessage("agent", data.reply, suggestedOptions); 
+                    const suggestedOptions = data.options || [];
+                    appendMessage("agent", data.reply, suggestedOptions);
                     chatHistory.push({ role: "assistant", content: data.reply });
-                    inputEl.placeholder = suggestedOptions.length > 0 ? "Select an option above, or type your own answer..." : "Describe your problem...";
+                    inputEl.placeholder = suggestedOptions.length > 0
+                        ? "Select an option above, or type your own answer..."
+                        : (hasSearchedAtLeastOnce ? "Refine — every message triggers a fresh search..." : "Describe your problem...");
                     inputEl.disabled = false; btnEl.disabled = false; inputEl.focus();
                 } else if (data.status === "complete") {
-                    currentProblemDescription = data.final_description;
-                    document.getElementById("ui-diagnosis").innerText = data.final_description;
-                    appendMessage("agent", "Diagnosis complete. Before I execute the search, do you have any specific requirements (like a location constraint, e.g., Bangalore, or budget)? If not, just click 'No'.", ["No"]);
+                    const finalDesc = (data.final_description || "").trim();
+                    if (!finalDesc) {
+                        appendMessage("agent", "I think I have enough — but I didn't capture a clean problem statement. Could you give me one sentence summarizing the problem?");
+                        inputEl.placeholder = "Summarize the problem in one sentence...";
+                        inputEl.disabled = false; btnEl.disabled = false; inputEl.focus();
+                        return;
+                    }
+                    // ALWAYS overwrite — never append. The diagnostician saw the
+                    // entire chat history and gave us a fresh combined diagnosis.
+                    currentProblemDescription = finalDesc;
+                    document.getElementById("ui-diagnosis").innerText = finalDesc;
+                    appendMessage(
+                        "agent",
+                        hasSearchedAtLeastOnce
+                            ? "Updated diagnosis. Any specific requirements (location, budget, timeline)? If not, click 'No'."
+                            : "Diagnosis complete. Any specific requirements (location, budget, timeline)? If not, click 'No'.",
+                        ["No"]
+                    );
                     isWaitingForExtraInfo = true;
                     inputEl.placeholder = "Enter location/constraints or click 'No'...";
                     inputEl.disabled = false; btnEl.disabled = false; inputEl.focus();
                 }
             } catch (err) {
                 console.error(err);
-                if(document.getElementById(typingId)) document.getElementById(typingId).remove();
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+                showToast("Failed to reach the chat agent. Check the backend.");
                 inputEl.disabled = false; btnEl.disabled = false;
             }
         }
 
+        // ============================================================
+        // runSearch — every call is a fresh search.
+        // Resets all results state, classification chips, filters, and the
+        // Solution Stack. Shows skeleton cards in the grid + a sticky inline
+        // status bar at the top of the results column.
+        // ============================================================
         async function runSearch(description) {
-            document.getElementById("search-status").style.display = "block";
-            document.getElementById("search-spinner").style.display = "inline-block";
-            document.getElementById("search-status-text").innerHTML = `Initiating search...<br><span style="font-size: 0.9rem; font-weight: 500; color: rgba(var(--rgb-text), 0.6);">Connecting to agents...</span>`;
-            document.getElementById("progress-ui").style.display = "none";
-            document.getElementById("progress-bar").style.width = "0%";
-            
-            // Hide specific elements, show master wrapper without empty state
-            document.getElementById("unified-config-panel").style.display = "none";
-            document.getElementById("master-results-wrapper").style.display = "none";
-            document.getElementById("results-container").innerHTML = "";
-            document.getElementById("comparison-report").style.display = "none";
-            document.getElementById("search-stats").innerHTML = "Results Board";
-            
-            fetchedProfiles = []; selectedUrls.clear(); totalExpectedCandidates = 0; candidatesProcessed = 0; isAllSelected = false;
+            // Transition out of centered-hero state on the very first run
+            if (document.body.classList.contains("initial-state")) {
+                document.body.classList.remove("initial-state");
+            }
+
+            // Abort any in-flight search before starting a new one
+            if (searchAbortController) {
+                try { searchAbortController.abort(); } catch (e) {}
+            }
+
+            // ====================================================
+            // FULL RESET — wipe everything from the previous pass
+            // ====================================================
+            fetchedProfiles = [];
+            selectedUrls.clear();
+            isAllSelected = false;
+            currentMinScore = 0;
+            currentResourceFilter = "all";
+            resourceCounts = { expert: 0, tool: 0, business: 0 };
+            totalExpectedCandidates = 0;
+            candidatesProcessed = 0;
+            cardArrivalIndex = 0;
+
             document.getElementById("btn-select-all").innerText = "Select All";
             updateCompareButton();
-            
-            currentMinScore = 0;
             document.getElementById("score-filter").value = 0;
-            document.getElementById("score-filter-label").innerText = `Min: 0`;
+            document.getElementById("score-filter-label").innerText = "Min: 0";
+
+            // Reset UI panels
+            document.getElementById("unified-config-panel").style.display = "none";
+            document.getElementById("unified-config-panel").open = false;
+            document.getElementById("classification-row").style.display = "none";
+            document.querySelectorAll(".class-chip").forEach(c => c.classList.remove("active"));
+
+            document.getElementById("stack-panel").style.display = "none";
+            document.getElementById("stack-content").innerHTML = "";
+
+            document.getElementById("comparison-report").style.display = "none";
+            document.getElementById("comparison-report").innerHTML = "";
+
+            // Reset resource tabs visual state
+            document.getElementById("resource-tabs").style.display = "none";
+            updateResourceTabs();
+            document.querySelectorAll(".resource-tab").forEach(t => t.classList.toggle("active", t.dataset.type === "all"));
+
+            // Show master wrapper + skeleton cards in the grid
+            document.getElementById("master-results-wrapper").style.display = "flex";
+            document.getElementById("search-stats").innerHTML = "Searching across experts, tools, and agencies...";
+            renderSkeletonCards(6);
+
+            // Show inline status bar (sticky so it stays visible alongside results)
+            showStatusBar();
+            setStatusText("Initiating search...", "Connecting to agents");
+            setProgress(0);
 
             searchAbortController = new AbortController();
 
             try {
-                const response = await fetch(`${API_BASE}/find_profiles_agentic`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ description: description }), signal: searchAbortController.signal
+                const response = await fetch(`${API_BASE}/find_solutions_agentic`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ description: description }),
+                    signal: searchAbortController.signal
                 });
 
                 const reader = response.body.getReader();
@@ -1050,161 +1835,393 @@
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
                     buffer += decoder.decode(value, { stream: true });
                     let lines = buffer.split("\n");
-                    buffer = lines.pop(); 
-
+                    buffer = lines.pop();
                     for (let line of lines) {
                         if (!line.trim()) continue;
-                        try { handleStreamChunk(JSON.parse(line)); } 
+                        try { handleStreamChunk(JSON.parse(line)); }
                         catch (e) { console.error("Parse error:", line, e); }
                     }
                 }
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error(err);
-                    document.getElementById("search-status").style.display = "none";
-                    document.getElementById("master-results-wrapper").style.display = "flex";
-                    document.getElementById("results-container").innerHTML = "<p style='color:#ef4444;'>Search failed. Backend logs may have details.</p>";
+                    // Non-destructive error handling: if anything streamed in, keep
+                    // it on screen and surface the error via toast. Otherwise show
+                    // an inline error in the results area.
+                    if (fetchedProfiles.length > 0) {
+                        hideStatusBar();
+                        showToast(`Search interrupted, but ${fetchedProfiles.length} candidate(s) were collected.`);
+                        document.getElementById("search-stats").innerHTML =
+                            `Results: <strong>${fetchedProfiles.length}</strong> candidate(s) <span style="font-weight: 500; color: rgba(var(--rgb-text), 0.55); font-size: 0.85rem;">(partial — search ended early)</span>`;
+                        hasSearchedAtLeastOnce = true;
+                    } else {
+                        hideStatusBar();
+                        clearSkeletons();
+                        document.getElementById("results-container").innerHTML =
+                            `<p style='color:#ef4444; grid-column: 1 / -1; text-align:center; padding:24px;'>Search failed before any results streamed in. Check backend logs and try again.</p>`;
+                    }
+                    enableChatInput();
                 }
             }
         }
-        
+
         function stopSearch() {
             if (searchAbortController) {
                 searchAbortController.abort();
-                document.getElementById("search-spinner").style.display = "none";
-                document.getElementById("progress-ui").style.display = "none";
-                document.getElementById("search-status-text").innerHTML = "Search stopped early.<br><span style='font-size: 0.9rem; font-weight: 500; color: rgba(var(--rgb-text), 0.6);'>Displaying current results.</span>";
-                
-                document.getElementById("unified-config-panel").style.display = "block";
-                document.getElementById("master-results-wrapper").style.display = "flex"; 
-                document.getElementById("search-stats").innerHTML = `Viewing top <strong>${fetchedProfiles.length}</strong> evaluated experts`;
+                hideStatusBar();
+                clearSkeletons();
+                document.getElementById("search-stats").innerHTML =
+                    `Results: <strong>${fetchedProfiles.length}</strong> candidate(s) <span style="font-weight: 500; color: rgba(var(--rgb-text), 0.55); font-size: 0.85rem;">(stopped early)</span>`;
+                enableChatInput();
+                hasSearchedAtLeastOnce = true;
             }
         }
 
-        function handleStreamChunk(data) {
-            if (data.type === "status") {
-                document.getElementById("search-status-text").innerHTML = `Initiating search...<br><span style="font-size: 0.9rem; font-weight: 500; color: rgba(var(--rgb-text), 0.6);">${data.message}</span>`;
-            } else if (data.type === "found_total") {
-                document.getElementById("progress-ui").style.display = "flex";
-                totalExpectedCandidates += data.total; updateProgressBar();
-            } else if (data.type === "profile") {
-                candidatesProcessed++; updateProgressBar();
-                fetchedProfiles.push(data.data);
-                
-                // Show Panels now that data exists
-                document.getElementById("unified-config-panel").style.display = "block";
-                document.getElementById("unified-config-panel").open = true; // Open by default initially
-                document.getElementById("master-results-wrapper").style.display = "flex"; 
-                document.getElementById("search-stats").innerHTML = `Found <strong>${fetchedProfiles.length}</strong> experts so far...`;
-                
-                fetchedProfiles.sort((a, b) => (b.llm_score || 0) - (a.llm_score || 0));
-                renderResults();
-            } else if (data.type === "done") {
-                document.getElementById("search-status").style.display = "none";
-                document.getElementById("search-stats").innerHTML = `Results: <strong>${data.total}</strong> experts evaluated.`;
-                document.getElementById("unified-config-panel").open = false; // Auto close when done
+        // ============================================================
+        // STATUS BAR (sticky — see CSS for position: sticky)
+        // ============================================================
+        function showStatusBar() { document.getElementById("search-status-bar").classList.add("active"); }
+        function hideStatusBar() { document.getElementById("search-status-bar").classList.remove("active"); }
+        function setStatusText(main, detail) {
+            const textEl = document.getElementById("status-text");
+            textEl.innerHTML = `${escapeHtml(main)}<span class="status-detail" id="status-detail">${escapeHtml(detail || "")}</span>`;
+        }
+        function setProgress(percent) {
+            document.getElementById("progress-bar").style.width = `${Math.min(100, Math.max(0, percent))}%`;
+        }
+
+        // ============================================================
+        // SKELETON CARDS (shown during search, replaced as real ones arrive)
+        // ============================================================
+        function renderSkeletonCards(count) {
+            const container = document.getElementById("results-container");
+            container.innerHTML = "";
+            for (let i = 0; i < count; i++) {
+                const skel = document.createElement("div");
+                skel.className = "skeleton-card";
+                skel.dataset.skeleton = "true";
+                skel.style.animationDelay = `${i * 60}ms`;
+                skel.innerHTML = `
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short" style="width: 30%;"></div>
+                    <div class="skeleton-line big"></div>
+                    <div class="skeleton-line long"></div>
+                    <div class="skeleton-line long" style="width: 85%;"></div>
+                    <div class="skeleton-spacer"></div>
+                    <div class="skeleton-line" style="width: 100%; height: 36px; border-radius: 10px;"></div>
+                `;
+                container.appendChild(skel);
             }
         }
-        
+        function clearSkeletons() {
+            document.querySelectorAll(".skeleton-card").forEach(s => s.remove());
+        }
+        function removeOneSkeleton() {
+            const first = document.querySelector(".skeleton-card");
+            if (first) first.remove();
+        }
+
+        // ============================================================
+        // STREAM HANDLER
+        // ============================================================
+        function handleStreamChunk(data) {
+            // Per-branch non-fatal errors — surface via toast, don't disturb cards
+            if (data.type === "error") {
+                console.warn("Backend reported a non-fatal error:", data);
+                const rt = data.resource_type
+                    ? data.resource_type.charAt(0).toUpperCase() + data.resource_type.slice(1)
+                    : null;
+                const msg = rt
+                    ? `${rt} branch hit an issue. Other branches will continue.`
+                    : (data.message || "A branch hit an issue. Continuing with the others.");
+                showToast(msg);
+                return;
+            }
+
+            if (data.type === "classification") {
+                const cls = data.data || {};
+                const row = document.getElementById("classification-row");
+                row.style.display = "flex";
+                row.querySelector('[data-type="expert"]').classList.toggle("active", !!cls.needs_experts);
+                row.querySelector('[data-type="tool"]').classList.toggle("active", !!cls.needs_tools);
+                row.querySelector('[data-type="business"]').classList.toggle("active", !!cls.needs_businesses);
+
+                document.getElementById("unified-config-panel").style.display = "block";
+                document.getElementById("unified-config-panel").open = true;
+                setStatusText("Classification complete", "Branching out to parallel agents...");
+                return;
+            }
+
+            if (data.type === "status") {
+                setStatusText("Working...", data.message || "");
+                return;
+            }
+
+            if (data.type === "found_total") {
+                totalExpectedCandidates += data.total;
+                updateProgressBar();
+                return;
+            }
+
+            if (data.type === "profile") {
+                const profile = data.data || {};
+                if (!profile.resource_type) profile.resource_type = data.resource_type || "expert";
+
+                // Defense-in-depth dedup (backend already does this, but be safe)
+                if (fetchedProfiles.some(p => p.profile_url === profile.profile_url)) return;
+
+                candidatesProcessed++;
+                updateProgressBar();
+
+                fetchedProfiles.push(profile);
+                resourceCounts[profile.resource_type] = (resourceCounts[profile.resource_type] || 0) + 1;
+
+                document.getElementById("resource-tabs").style.display = "flex";
+                document.getElementById("search-stats").innerHTML =
+                    `Found <strong>${fetchedProfiles.length}</strong> candidate(s) so far...`;
+                updateResourceTabs();
+
+                // As real results arrive, remove one skeleton per result
+                removeOneSkeleton();
+
+                fetchedProfiles.sort((a, b) => (b.llm_score || 0) - (a.llm_score || 0));
+                renderResults();
+                return;
+            }
+
+            if (data.type === "done") {
+                hideStatusBar();
+                clearSkeletons();
+
+                const totals = data.totals || {};
+                const totalFromBackend = (totals.experts || 0) + (totals.tools || 0) + (totals.businesses || 0);
+                const totalCount = Math.max(totalFromBackend, fetchedProfiles.length);
+
+                document.getElementById("search-stats").innerHTML = `Results: <strong>${totalCount}</strong> candidate(s) evaluated.`;
+                document.getElementById("unified-config-panel").open = false;
+                hasSearchedAtLeastOnce = true;
+
+                if (data.stack_html) {
+                    const stackPanel = document.getElementById("stack-panel");
+                    document.getElementById("stack-content").innerHTML =
+                        data.stack_html.replace(/^```html\n?/i, '').replace(/```$/i, '');
+                    stackPanel.style.display = "block";
+                    stackPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
+                enableChatInput();
+                return;
+            }
+        }
+
         function updateProgressBar() {
             if (totalExpectedCandidates > 0) {
                 const percentage = Math.min((candidatesProcessed / totalExpectedCandidates) * 100, 100);
-                document.getElementById("progress-bar").style.width = `${percentage}%`;
+                setProgress(percentage);
             }
         }
 
+        function enableChatInput() {
+            const inputEl = document.getElementById("chat-input");
+            const btnEl = document.getElementById("send-btn");
+            inputEl.disabled = false; btnEl.disabled = false;
+            inputEl.placeholder = "Refine — every message triggers a fresh search...";
+        }
+
+        // ============================================================
+        // RESOURCE TABS
+        // ============================================================
+        function updateResourceTabs() {
+            const total = resourceCounts.expert + resourceCounts.tool + resourceCounts.business;
+            document.getElementById("count-all").innerText = total;
+            document.getElementById("count-expert").innerText = resourceCounts.expert;
+            document.getElementById("count-tool").innerText = resourceCounts.tool;
+            document.getElementById("count-business").innerText = resourceCounts.business;
+        }
+
+        function switchResourceTab(type) {
+            currentResourceFilter = type;
+            document.querySelectorAll(".resource-tab").forEach(t => {
+                t.classList.toggle("active", t.dataset.type === type);
+            });
+            renderResults();
+        }
+
+        // ============================================================
+        // RESULTS RENDERING
+        // ============================================================
         function renderResults() {
             const resultsEl = document.getElementById("results-container");
-            resultsEl.innerHTML = "";
-            
-            const filteredProfiles = fetchedProfiles.filter(prof => {
-                let score = prof.llm_score <= 10 ? prof.llm_score * 100 : prof.llm_score;
-                return score >= currentMinScore;
+            // Preserve any remaining skeletons (they sit at the end of the grid)
+            const skeletons = Array.from(resultsEl.querySelectorAll(".skeleton-card"));
+
+            // Clear non-skeleton children
+            Array.from(resultsEl.children).forEach(child => {
+                if (!child.classList.contains("skeleton-card")) child.remove();
             });
 
-            if (filteredProfiles.length === 0 && fetchedProfiles.length > 0) {
-                 resultsEl.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: rgba(var(--rgb-text), 0.5);">No experts match the current filter criteria.</p>`;
-                 return;
+            const filteredProfiles = fetchedProfiles.filter(prof => {
+                const score = prof.llm_score <= 10 ? prof.llm_score * 100 : prof.llm_score;
+                const passesScore = score >= currentMinScore;
+                const passesType = currentResourceFilter === "all" || prof.resource_type === currentResourceFilter;
+                return passesScore && passesType;
+            });
+
+            if (filteredProfiles.length === 0 && fetchedProfiles.length > 0 && skeletons.length === 0) {
+                resultsEl.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: rgba(var(--rgb-text), 0.5); padding: 24px;">No candidates match the current filters.</p>`;
+                return;
             }
 
-            filteredProfiles.forEach(prof => renderSingleProfileCard(prof));
+            // Re-render all cards (preserves selection state and keeps skeletons trailing)
+            filteredProfiles.forEach((prof, idx) => renderSingleProfileCard(prof, idx));
+
+            // Re-append skeletons after the real cards
+            skeletons.forEach(s => resultsEl.appendChild(s));
         }
 
         function getScoreTier(score) {
-            if (score >= 900) return { label: "Top Solver", className: "tier-top" };
-            if (score >= 750) return { label: "Trusted Solver", className: "tier-strong" };
-            if (score >= 500) return { label: "Fair Activity", className: "tier-potential" };
-            return { label: "Low Engagement", className: "tier-low" };
+            if (score >= 900) return { label: "Top Solver", className: "tier-top", color: "#10b981" };
+            if (score >= 750) return { label: "Trusted Solver", className: "tier-strong", color: "rgba(var(--rgb-accent), 1)" };
+            if (score >= 500) return { label: "Fair Activity", className: "tier-potential", color: "#f59e0b" };
+            return { label: "Low Engagement", className: "tier-low", color: "#ef4444" };
         }
 
         function updateFilter(value) {
             currentMinScore = parseInt(value, 10);
             document.getElementById('score-filter-label').innerText = `Min: ${currentMinScore}`;
-            renderResults(); 
+            renderResults();
         }
 
-        function renderSingleProfileCard(prof) {
+        function renderSingleProfileCard(prof, idx) {
             const resultsEl = document.getElementById("results-container");
-            let nameStr = extractName(prof);
-            let score = prof.llm_score <= 10 ? prof.llm_score * 100 : prof.llm_score;
-            let dynamicTitleStr = prof.dynamic_title || "Specialized Expert";
-            let url = prof.profile_url;
-            const isChecked = selectedUrls.has(url) ? 'checked' : '';
+            const rt = prof.resource_type || "expert";
+            const nameStr = extractName(prof);
+            const score = prof.llm_score <= 10 ? prof.llm_score * 100 : prof.llm_score;
+            const dynamicTitleStr = prof.dynamic_title || (rt === "tool" ? "Software Tool" : rt === "business" ? "Consulting Firm" : "Specialized Expert");
+            const url = prof.profile_url;
+            const isChecked = selectedUrls.has(url);
             const tier = getScoreTier(score);
 
+            const rtBadgeClass = rt === "tool" ? "rt-tool" : rt === "business" ? "rt-business" : "rt-expert";
+            const rtLabel      = rt === "tool" ? "Tool" : rt === "business" ? "Agency" : "Expert";
+            const linkLabel    = rt === "tool" ? "Visit Tool →" : rt === "business" ? "Visit Firm →" : "View Full Profile →";
+
+            const sourcePill = prof.source_domain
+                ? `<div class="source-pill">via ${escapeHtml(prof.source_domain)}</div>`
+                : "";
+
+            const managePanel = (rt === "expert") ? `
+                <div class="manage-profile-wrapper">
+                    <div class="manage-profile-text">Is this your profile?</div>
+                    <div class="manage-btn-group">
+                        <button class="manage-btn" onclick="event.preventDefault(); showToast('Claim flow not yet implemented.');">Claim</button>
+                        <button class="manage-btn" onclick="event.preventDefault(); showToast('Remove flow not yet implemented.');">Remove</button>
+                    </div>
+                </div>` : "";
+
             const card = document.createElement("div");
-            card.className = "profile-card";
+            card.className = "profile-card" + (isChecked ? " is-selected" : "");
+            card.dataset.resourceType = rt;
+            card.dataset.url = url;
+            // Gentle stagger — looks nice during a fast stream of cards
+            card.style.animationDelay = `${Math.min(idx * 35, 280)}ms`;
+
             card.innerHTML = `
                 <div class="checkbox-container">
-                    <input type="checkbox" class="compare-cb" value="${url}" ${isChecked} onchange="handleSelection(this, '${url}')">
+                    <div class="card-checkbox ${isChecked ? 'checked' : ''}" role="checkbox" aria-checked="${isChecked}" tabindex="0" data-url="${escapeHtml(url)}" onclick="toggleSelection(this)" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault(); toggleSelection(this);}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
                 </div>
-                
+
+                <span class="resource-type-badge ${rtBadgeClass}">${rtLabel}</span>
+
                 <div class="profile-header-group">
-                    <h3 class="profile-name">${nameStr}</h3>
-                    <p class="profile-title">${dynamicTitleStr}</p>
+                    <h3 class="profile-name">${escapeHtml(nameStr)}</h3>
+                    <p class="profile-title">${escapeHtml(dynamicTitleStr)}</p>
                 </div>
-                
+
+                ${sourcePill}
+
                 <div class="score-inline-group">
-                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 0.85; color: ${tier.className === 'tier-top' ? '#10b981' : (tier.className === 'tier-strong' ? 'rgba(var(--rgb-accent), 1)' : (tier.className === 'tier-potential' ? '#f59e0b' : '#ef4444'))};">
-                        <span class="score-large" style="line-height: 0.85; margin-bottom: 2px;">${score}</span>
+                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 0.85; color: ${tier.color};">
+                        <span class="score-large" data-target-score="${score}" style="line-height: 0.85; margin-bottom: 2px;">0</span>
                         <span style="font-size: 0.45em; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">Solver</span>
                     </div>
                     <span class="score-tier-badge ${tier.className}">${tier.label}</span>
                 </div>
 
                 <div class="permanent-reasoning">
-                    <strong>AI Evaluation:</strong> ${prof.llm_reason || "Profile matches the required semantic parameters."}
+                    <strong>AI Evaluation:</strong> ${escapeHtml(prof.llm_reason || "Candidate matches the required semantic parameters.")}
                 </div>
-                
-                <a href="${url}" target="_blank" class="profile-link">View Full Profile →</a>
 
-                <div class="manage-profile-wrapper">
-                    <div class="manage-profile-text">Is this your profile?</div>
-                    <div class="manage-btn-group">
-                        <button class="manage-btn" onclick="event.preventDefault(); alert('Claiming profile flow initiated...')">Claim</button>
-                        <button class="manage-btn" onclick="event.preventDefault(); alert('Removing profile from index...')">Remove</button>
-                    </div>
-                </div>
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="profile-link">${linkLabel}</a>
+
+                ${managePanel}
             `;
             resultsEl.appendChild(card);
+
+            // Animate the score number counting up
+            animateScore(card.querySelector(".score-large"), score);
         }
 
-        function handleSelection(checkbox, url) {
-            checkbox.checked ? selectedUrls.add(url) : selectedUrls.delete(url);
+        function animateScore(el, target) {
+            if (!el) return;
+            const duration = 600;
+            const start = performance.now();
+            const startVal = 0;
+            function tick(now) {
+                const t = Math.min(1, (now - start) / duration);
+                // ease-out cubic
+                const eased = 1 - Math.pow(1 - t, 3);
+                const val = Math.round(startVal + (target - startVal) * eased);
+                el.textContent = val;
+                if (t < 1) requestAnimationFrame(tick);
+                else el.textContent = target;
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return "";
+            return String(s)
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+        }
+
+        // ============================================================
+        // SELECTION (for comparison)
+        // ============================================================
+        function toggleSelection(checkboxEl) {
+            const url = checkboxEl.dataset.url;
+            const card = checkboxEl.closest(".profile-card");
+            const wasChecked = checkboxEl.classList.contains("checked");
+            if (wasChecked) {
+                selectedUrls.delete(url);
+                checkboxEl.classList.remove("checked");
+                checkboxEl.setAttribute("aria-checked", "false");
+                if (card) card.classList.remove("is-selected");
+            } else {
+                selectedUrls.add(url);
+                checkboxEl.classList.add("checked");
+                checkboxEl.setAttribute("aria-checked", "true");
+                if (card) card.classList.add("is-selected");
+            }
             updateCompareButton();
         }
-        
+
         function toggleSelectAll() {
             isAllSelected = !isAllSelected;
             const btn = document.getElementById("btn-select-all");
-            
+
             if (isAllSelected) {
                 const currentlyVisibleProfiles = fetchedProfiles.filter(prof => {
-                    let score = prof.llm_score <= 10 ? prof.llm_score * 100 : prof.llm_score;
-                    return score >= currentMinScore;
+                    const score = prof.llm_score <= 10 ? prof.llm_score * 100 : prof.llm_score;
+                    const passesScore = score >= currentMinScore;
+                    const passesType = currentResourceFilter === "all" || prof.resource_type === currentResourceFilter;
+                    return passesScore && passesType;
                 });
                 currentlyVisibleProfiles.forEach(p => selectedUrls.add(p.profile_url));
                 btn.innerText = "Deselect All";
@@ -1212,60 +2229,139 @@
                 selectedUrls.clear();
                 btn.innerText = "Select All";
             }
-            
-            document.querySelectorAll('.compare-cb').forEach(cb => { cb.checked = selectedUrls.has(cb.value); });
+
+            // Update visual state on all visible cards
+            document.querySelectorAll(".profile-card").forEach(card => {
+                const url = card.dataset.url;
+                const cb = card.querySelector(".card-checkbox");
+                const checked = selectedUrls.has(url);
+                if (cb) {
+                    cb.classList.toggle("checked", checked);
+                    cb.setAttribute("aria-checked", checked ? "true" : "false");
+                }
+                card.classList.toggle("is-selected", checked);
+            });
             updateCompareButton();
         }
-        
+
         function updateCompareButton() {
             const compareBtn = document.getElementById('btn-compare');
             compareBtn.innerText = `Compare Selected (${selectedUrls.size})`;
             compareBtn.disabled = selectedUrls.size < 2;
         }
 
+        // ============================================================
+        // HOLISTIC COMPARISON
+        // ============================================================
+        function buildOtherResourcesPayload(selectedSet) {
+            const slim = (p) => ({
+                resource_type: p.resource_type,
+                profile_url: p.profile_url,
+                dynamic_title: p.dynamic_title,
+                llm_score: p.llm_score,
+                llm_reason: p.llm_reason,
+                snippet: p.snippet,
+                tool_name: p.tool_name,
+                firm_name: p.firm_name,
+                source_domain: p.source_domain,
+            });
+
+            const otherTools = fetchedProfiles
+                .filter(p => p.resource_type === "tool" && !selectedSet.has(p.profile_url))
+                .sort((a, b) => (b.llm_score || 0) - (a.llm_score || 0))
+                .slice(0, 8)
+                .map(slim);
+
+            const otherBiz = fetchedProfiles
+                .filter(p => p.resource_type === "business" && !selectedSet.has(p.profile_url))
+                .sort((a, b) => (b.llm_score || 0) - (a.llm_score || 0))
+                .slice(0, 8)
+                .map(slim);
+
+            return { tools: otherTools, businesses: otherBiz };
+        }
+
         async function generateComparison() {
-            const selectedProfiles = fetchedProfiles
-                .filter(p => selectedUrls.has(p.profile_url))
-                .map(p => {
+            const selected = fetchedProfiles.filter(p => selectedUrls.has(p.profile_url));
+
+            const items = selected.map(p => {
+                const rt = p.resource_type || "expert";
+                const base = {
+                    resource_type: rt,
+                    profile_url: p.profile_url,
+                    dynamic_title: p.dynamic_title,
+                    llm_score: p.llm_score,
+                    llm_reason: p.llm_reason,
+                    resolved_name: fullDisplayName(p),
+                };
+                if (rt === "expert") {
                     const prof_data = p.profile_json || {};
                     const exp = prof_data.experience || [];
-                    return { 
-                        resolved_name: extractName(p),
-                        profile_json: {
-                            headline: prof_data.headline,
-                            summary: prof_data.summary,
-                            experience: Array.isArray(exp) ? exp.slice(0, 3) : []
-                        }
+                    base.profile_json = {
+                        headline: prof_data.headline,
+                        summary: prof_data.summary,
+                        experience: Array.isArray(exp) ? exp.slice(0, 3) : []
                     };
-                });
-                
+                } else if (rt === "tool") {
+                    base.tool_name = p.tool_name;
+                    base.snippet = p.snippet;
+                } else if (rt === "business") {
+                    base.firm_name = p.firm_name;
+                    base.snippet = p.snippet;
+                }
+                return base;
+            });
+
             const reportPanel = document.getElementById('comparison-report');
             const compareBtn = document.getElementById('btn-compare');
-            
+
             reportPanel.style.display = "block";
             reportPanel.innerHTML = `
                 <h3 style="color: rgba(var(--rgb-text), 1); display:flex; align-items:center; gap:12px; margin-top:0;">
-                    <div class="spinner"></div> Generating Analysis...
+                    <div class="spinner"></div> Generating Holistic Analysis...
                 </h3>
-                <p style="color: rgba(var(--rgb-text), 0.6); font-size: 0.9rem; margin-bottom:0;">Reading full resumes of selected candidates...</p>
+                <p style="color: rgba(var(--rgb-text), 0.6); font-size: 0.9rem; margin-bottom:0;">Comparing your selections and recommending a full Solution Stack with tools and agencies...</p>
             `;
             compareBtn.disabled = true;
 
+            const otherResources = buildOtherResourcesPayload(selectedUrls);
+
             try {
-                const response = await fetch(`${API_BASE}/compare_candidates`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ description: currentProblemDescription, profiles: selectedProfiles })
-                });
-                
+                const allExperts = items.every(i => i.resource_type === "expert");
+                let response;
+                if (allExperts) {
+                    const legacyPayload = {
+                        description: currentProblemDescription,
+                        profiles: items.map(i => ({
+                            resolved_name: i.resolved_name,
+                            profile_json: i.profile_json
+                        })),
+                        other_resources: otherResources,
+                    };
+                    response = await fetch(`${API_BASE}/compare_candidates`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(legacyPayload)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/compare_solutions`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            description: currentProblemDescription,
+                            items: items,
+                            other_resources: otherResources,
+                        })
+                    });
+                }
+
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.detail || "Server failed to generate the report.");
-                
+
                 reportPanel.innerHTML = `
                     <button id="export-pdf-btn" class="download-pdf-btn" onclick="downloadPDF()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> 
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         Download PDF
                     </button>
-                    <h2 style="color: rgba(var(--rgb-text), 1); margin-top:0;">Expert Comparison Report</h2>
+                    <h2 style="color: rgba(var(--rgb-text), 1); margin-top:0;">Holistic Solution Analysis</h2>
                     <div style="font-size: 0.95rem; line-height: 1.6; color: rgba(var(--rgb-text), 0.9);">
                         ${data.comparison_html.replace(/^```html\n?/i, '').replace(/```$/i, '')}
                     </div>
@@ -1273,9 +2369,97 @@
                 reportPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch (err) {
                 console.error(err);
-                reportPanel.innerHTML = `<p style="color:#ef4444; font-weight: 500; margin:0;">⚠️ Error: ${err.message}</p>`;
+                reportPanel.innerHTML = `<p style="color:#ef4444; font-weight: 500; margin:0;">⚠️ Error: ${escapeHtml(err.message)}</p>`;
             } finally { updateCompareButton(); }
         }
+
+        // ============================================================
+        // FULL RESET — "New search" button
+        // ============================================================
+        function startNewSearch() {
+            if (!confirm("Start a new search? Your current chat and results will be cleared.")) return;
+
+            // Abort any in-flight search
+            if (searchAbortController) {
+                try { searchAbortController.abort(); } catch (e) {}
+                searchAbortController = null;
+            }
+
+            // Reset all state
+            chatHistory = [];
+            fetchedProfiles = [];
+            currentProblemDescription = "";
+            currentMinScore = 0;
+            isWaitingForExtraInfo = false;
+            totalExpectedCandidates = 0;
+            candidatesProcessed = 0;
+            selectedUrls = new Set();
+            isAllSelected = false;
+            currentResourceFilter = "all";
+            resourceCounts = { expert: 0, tool: 0, business: 0 };
+            hasSearchedAtLeastOnce = false;
+            cardArrivalIndex = 0;
+
+            // Reset UI back to centered initial state
+            document.body.classList.add("initial-state");
+
+            document.getElementById("chat-box").innerHTML = `
+                <div class="message agent-msg">
+                    <p>Hi there. I'm the SolverSearch AI.</p>
+                    <p>Tell me about the problem you're facing. I'll find the right combination of experts, tools, and agencies to solve it.</p>
+                </div>
+            `;
+
+            document.getElementById("unified-config-panel").style.display = "none";
+            document.getElementById("unified-config-panel").open = false;
+            document.getElementById("results-container").innerHTML = "";
+            document.getElementById("comparison-report").style.display = "none";
+            document.getElementById("comparison-report").innerHTML = "";
+            document.getElementById("stack-panel").style.display = "none";
+            document.getElementById("stack-content").innerHTML = "";
+            document.getElementById("search-stats").innerHTML = "Results Board";
+            document.getElementById("ui-diagnosis").innerText = "";
+            document.getElementById("classification-row").style.display = "none";
+            document.querySelectorAll(".class-chip").forEach(c => c.classList.remove("active"));
+            document.getElementById("resource-tabs").style.display = "none";
+            updateResourceTabs();
+            document.querySelectorAll(".resource-tab").forEach(t => t.classList.toggle("active", t.dataset.type === "all"));
+            document.getElementById("score-filter").value = 0;
+            document.getElementById("score-filter-label").innerText = "Min: 0";
+            document.getElementById("btn-select-all").innerText = "Select All";
+            updateCompareButton();
+            hideStatusBar();
+            hideToast();
+
+            // Restore example prompts in case they were hidden
+            if (examplePromptsEl) examplePromptsEl.classList.remove("hidden");
+
+            // Restore empty state in results container
+            document.getElementById("results-container").innerHTML = `
+                <div class="empty-state" id="empty-state" style="grid-column: 1 / -1;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <p>Describe your problem to start matching with experts, tools, and agencies.</p>
+                </div>
+            `;
+
+            const inputEl = document.getElementById("chat-input");
+            const btnEl = document.getElementById("send-btn");
+            inputEl.value = "";
+            resetChatInputHeight();
+            inputEl.disabled = false; btnEl.disabled = false;
+            inputEl.placeholder = "Describe your problem...";
+            inputEl.focus();
+        }
+    document.addEventListener("input", function (e) {
+    if (e.target && e.target.id === "chat-input") {
+        const el = document.querySelector(".example-prompts");
+        if (!el) return;
+        el.style.display = e.target.value.trim().length > 0 ? "none" : "";
+    }
+});
     </script>
 </body>
 </html>
