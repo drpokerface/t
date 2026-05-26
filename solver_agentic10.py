@@ -48,7 +48,7 @@ from typing import Any, Dict, List, Optional, Tuple, Literal, TypedDict, Annotat
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, Response
+from fastapi.responses import StreamingResponse, Response, HTMLResponse
 from pydantic import BaseModel, Field
 from openai import OpenAI
 import uvicorn
@@ -57,6 +57,8 @@ from weasyprint import HTML, CSS
 # LangGraph
 from langgraph.graph import StateGraph, START, END
 from langgraph.config import get_stream_writer
+from fastapi.staticfiles import StaticFiles
+
 
 from fastapi.templating import Jinja2Templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
