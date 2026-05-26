@@ -58,6 +58,9 @@ from weasyprint import HTML, CSS
 from langgraph.graph import StateGraph, START, END
 from langgraph.config import get_stream_writer
 
+from fastapi.templating import Jinja2Templates
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
 # ------------------------------ Configuration ------------------------------
 OPENAI_API_KEY      = os.getenv("OPENAI_API_KEY", "")
 SERP_API_KEY        = os.getenv("SERP_API_KEY", "")
@@ -1438,6 +1441,21 @@ compare_solutions_graph = _compare_sol_g.compile()
 # ============================================================
 # FastAPI Endpoints
 # ============================================================
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_home(request: Request):
+    try:
+        return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={}
+    )
+    except Exception as e:
+        import traceback
+        return HTMLResponse(
+            content=f"<pre>{traceback.format_exc()}</pre>",
+            status_code=500
+        )
 
 # --- Feature 1: Chat Diagnostician ---
 @app.post("/chat_gather_info")
